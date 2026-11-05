@@ -1,17 +1,9 @@
 <script setup lang="ts">
-import {
-  CircleCheck,
-  InfoFilled,
-  Loading,
-  QuestionFilled,
-  Refresh,
-  Timer,
-  Warning,
-} from '@element-plus/icons-vue'
-import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue'
+import { InfoFilled, Refresh } from '@element-plus/icons-vue'
+import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { checkHealth, checkReadiness } from '../../api/system'
 import ConnectionStatusCard from '../../components/ConnectionStatusCard.vue'
-import type { ConnectionState, ConnectionStatus } from '../../types/status'
+import type { ConnectionStatus } from '../../types/status'
 import { apiBaseUrl, RequestError } from '../../utils/request'
 
 const services = [
@@ -34,53 +26,10 @@ const checkingStatuses: Record<'server' | 'database', ConnectionStatus> = {
   database: { state: 'checking', description: '正在通过后端验证数据库连接…' },
 }
 
-const timeFormatter = new Intl.DateTimeFormat('zh-CN', {
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: false,
-})
-
 const checking = shallowRef(false)
-const checkedAt = shallowRef<Date | null>(null)
 const results = shallowRef<Record<'server' | 'database', ConnectionStatus>>(checkingStatuses)
 
 let controller: AbortController | undefined
-
-const healthyCount = computed(
-  () => services.filter((service) => results.value[service.kind].state === 'healthy').length,
-)
-const summaryState = computed<ConnectionState>(() => {
-  if (checking.value) return 'checking'
-  if (healthyCount.value === services.length) return 'healthy'
-  return services.some((service) => results.value[service.kind].state === 'unhealthy')
-    ? 'unhealthy'
-    : 'unknown'
-})
-const summary = computed(() => {
-  if (checking.value) return '正在检测'
-  if (summaryState.value === 'healthy') return '服务运行正常'
-  return summaryState.value === 'unhealthy' ? '服务需要关注' : '状态待确认'
-})
-const summaryDescription = computed(() => {
-  if (checking.value) return '正在分别验证后端接口与数据库连接。'
-  if (summaryState.value === 'healthy') return '后端接口与数据库连接均已就绪，无需处理。'
-  return '连接详情中显示了异常项，处理后可重新检测。'
-})
-const checkedAtLabel = computed(() =>
-  checkedAt.value ? timeFormatter.format(checkedAt.value) : '尚未检测',
-)
-const healthyPercentage = computed(() => (healthyCount.value / services.length) * 100)
-
-const summaryMeta = {
-  checking: { icon: Loading, label: '检测中', tagType: 'info' },
-  healthy: { icon: CircleCheck, label: '正常', tagType: 'success' },
-  unhealthy: { icon: Warning, label: '异常', tagType: 'danger' },
-  unknown: { icon: QuestionFilled, label: '未知', tagType: 'warning' },
-} as const
-const currentSummary = computed(() => summaryMeta[summaryState.value])
 
 // A network error, a timeout, or a gateway error means the backend never answered; only then
 // is the database unknowable. Every other failure belongs to the service that failed.
@@ -138,7 +87,6 @@ async function refresh() {
     server: serverStatus(health),
     database: databaseStatus(health, database),
   }
-  checkedAt.value = new Date()
   checking.value = false
 }
 
@@ -168,47 +116,6 @@ onBeforeUnmount(() => {
         <span>{{ checking ? '正在检测' : '重新检测' }}</span>
       </el-button>
     </header>
-
-    <el-card class="overview-card" :data-state="summaryState" shadow="never" aria-label="运行概览">
-      <div class="overview-layout">
-        <div class="overview-main">
-          <span class="overview-icon" aria-hidden="true">
-            <el-icon :class="{ 'is-spinning': checking }">
-              <component :is="currentSummary.icon" />
-            </el-icon>
-          </span>
-          <div class="overview-copy">
-            <p class="overview-label">当前状态</p>
-            <p class="overview-title" role="status" aria-live="polite">{{ summary }}</p>
-            <p class="overview-description">{{ summaryDescription }}</p>
-          </div>
-        </div>
-
-        <div class="overview-metric">
-          <div class="metric-line">
-            <span>连接就绪</span>
-            <el-tag :type="currentSummary.tagType" effect="plain" round>
-              {{ currentSummary.label }}
-            </el-tag>
-          </div>
-          <p class="metric-count" aria-label="正常连接数">
-            <strong>{{ healthyCount }}</strong>
-            <span>/ {{ services.length }}</span>
-          </p>
-          <el-progress
-            :percentage="healthyPercentage"
-            :show-text="false"
-            :stroke-width="6"
-            :color="'var(--state-color)'"
-            aria-label="连接正常比例"
-          />
-          <p class="checked-at">
-            <el-icon aria-hidden="true"><Timer /></el-icon>
-            最近检测 {{ checkedAtLabel }}
-          </p>
-        </div>
-      </div>
-    </el-card>
 
     <section class="services-section" aria-labelledby="services-heading">
       <div class="section-heading">
@@ -300,134 +207,8 @@ onBeforeUnmount(() => {
   margin-inline-end: 4px;
 }
 
-.overview-card {
-  --state-color: var(--status-ok);
-  --state-tint: var(--status-ok-tint);
-  border: 1px solid var(--status-info-border);
-  border-radius: 12px;
-  background: #fbfdff;
-  box-shadow: var(--shadow-card);
-}
-
-.overview-card[data-state='checking'] {
-  --state-color: var(--status-info);
-  --state-tint: var(--status-info-tint);
-}
-
-.overview-card[data-state='unhealthy'] {
-  --state-color: var(--status-bad);
-  --state-tint: var(--status-bad-tint);
-}
-
-.overview-card[data-state='unknown'] {
-  --state-color: var(--status-warn);
-  --state-tint: var(--status-warn-tint);
-}
-
-.overview-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
-  align-items: center;
-  gap: 32px;
-}
-
-.overview-main {
-  display: flex;
-  min-width: 0;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.overview-icon {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 8px;
-  color: var(--state-color);
-  background: var(--state-tint);
-  font-size: 24px;
-}
-
-.overview-copy {
-  min-width: 0;
-}
-
-.overview-label {
-  margin: 0 0 4px;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1rem;
-}
-
-.overview-title {
-  margin: 0;
-  color: var(--text);
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 2rem;
-}
-
-.overview-description {
-  margin: 8px 0 0;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  line-height: 1.5rem;
-}
-
-.overview-metric {
-  min-width: 0;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-muted);
-}
-
-.metric-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  line-height: 1rem;
-}
-
-.metric-count {
-  margin: 12px 0;
-  color: var(--text);
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.metric-count strong {
-  font-size: 2.25rem;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-
-.metric-count span {
-  margin-inline-start: 4px;
-  color: var(--text-muted);
-}
-
-.checked-at {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin: 12px 0 0;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1rem;
-}
-
 .services-section {
-  margin-top: 32px;
+  margin-top: 0;
 }
 
 .section-heading {
@@ -509,26 +290,7 @@ onBeforeUnmount(() => {
   background: transparent;
 }
 
-.overview-card :deep(.el-card__body) {
-  padding: 24px;
-}
-
-.is-spinning {
-  animation: spin 900ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @media (max-width: 760px) {
-  .overview-layout {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
   .services {
     grid-template-columns: 1fr;
   }
@@ -548,25 +310,6 @@ onBeforeUnmount(() => {
     line-height: 2rem;
   }
 
-  .overview-main {
-    gap: 12px;
-  }
-
-  .overview-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-
-  .overview-title {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
-  }
-
-  .overview-card :deep(.el-card__body) {
-    padding: 16px;
-  }
-
   .section-heading {
     align-items: flex-start;
   }
@@ -581,12 +324,6 @@ onBeforeUnmount(() => {
 
   .note-description {
     padding-inline-start: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .is-spinning {
-    animation: none;
   }
 }
 </style>
