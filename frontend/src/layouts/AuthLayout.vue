@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Reading } from '@element-plus/icons-vue'
 import { RouterLink, RouterView } from 'vue-router'
+import ThemeToggle from '../components/ThemeToggle.vue'
 </script>
 
 <template>
@@ -17,7 +18,10 @@ import { RouterLink, RouterView } from 'vue-router'
           <small>预约管理系统</small>
         </span>
       </RouterLink>
-      <el-tag effect="plain" round>账号中心</el-tag>
+      <div class="auth-actions">
+        <el-tag effect="plain" round>账号中心</el-tag>
+        <ThemeToggle />
+      </div>
     </header>
 
     <main id="auth-content" class="auth-content" tabindex="-1">
@@ -39,8 +43,12 @@ import { RouterLink, RouterView } from 'vue-router'
   flex-direction: column;
   overflow: hidden;
   background:
-    radial-gradient(circle at 82% 12%, rgb(72 119 156 / 16%), transparent 30rem),
-    linear-gradient(145deg, #edf4f9 0%, #f7f9fb 52%, #eef3f7 100%);
+    radial-gradient(
+      circle at 82% 12%,
+      color-mix(in srgb, var(--accent) 16%, transparent),
+      transparent 30rem
+    ),
+    linear-gradient(145deg, var(--canvas) 0%, var(--surface-muted) 52%, var(--canvas) 100%);
 }
 
 .auth-shell::before {
@@ -49,7 +57,7 @@ import { RouterLink, RouterView } from 'vue-router'
   right: -120px;
   width: 360px;
   height: 360px;
-  border: 1px solid rgb(31 78 121 / 12%);
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
   border-radius: 50%;
   content: '';
   pointer-events: none;
@@ -91,6 +99,12 @@ import { RouterLink, RouterView } from 'vue-router'
   padding: 22px 32px;
 }
 
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .auth-brand {
   display: inline-flex;
   align-items: center;
@@ -106,8 +120,8 @@ import { RouterLink, RouterView } from 'vue-router'
   flex-shrink: 0;
   place-items: center;
   border-radius: 9px;
-  color: #fff;
-  background: var(--navy-800);
+  color: var(--accent-contrast);
+  background: var(--accent);
   font-size: 20px;
 }
 
@@ -177,6 +191,10 @@ import { RouterLink, RouterView } from 'vue-router'
   }
 
   .auth-footer span {
+    display: none;
+  }
+
+  .auth-actions .el-tag {
     display: none;
   }
 }

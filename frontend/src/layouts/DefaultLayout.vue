@@ -3,6 +3,7 @@ import { ArrowRight, Menu as MenuIcon, Reading } from '@element-plus/icons-vue'
 import { computed, shallowRef, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import AppNavigation from '../components/AppNavigation.vue'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const route = useRoute()
 const drawerOpen = shallowRef(false)
@@ -71,6 +72,7 @@ watch(
           </div>
 
           <div class="topbar-meta">
+            <ThemeToggle />
             <el-tag size="small" effect="plain" round>{{ environment }}</el-tag>
             <span>v0.1.0</span>
           </div>
@@ -188,6 +190,7 @@ watch(
   place-items: center;
   border: 1px solid var(--accent);
   border-radius: 8px;
+  color: var(--accent-contrast);
   background: var(--accent);
   font-size: 20px;
 }
