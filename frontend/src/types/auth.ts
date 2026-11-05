@@ -84,3 +84,19 @@ export interface UserPage extends Paginated<AdminUser> {
     disabled: number
   }
 }
+
+export interface UserAuditLogItem {
+  id: string
+  action: string
+  reason: string | null
+  before: Record<string, unknown> | null
+  after: Record<string, unknown> | null
+  operator: {
+    id: string
+    username: string
+    displayName: string
+  } | null
+  createdAt: string
+}
+
+export type UserAuditLogPage = Paginated<UserAuditLogItem>

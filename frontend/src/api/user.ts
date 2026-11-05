@@ -4,6 +4,7 @@ import type {
   PasswordChangeInput,
   ProfileUpdateInput,
   UserListQuery,
+  UserAuditLogPage,
   UserPage,
   UserProfile,
   UserStatus,
@@ -54,5 +55,16 @@ export async function changeUserStatus(
 
 export async function createAdmin(input: CreateAdminInput): Promise<AdminUser> {
   const response = await request.post('/admin/users', input)
+  return envelopeData(response)
+}
+
+export async function getUserAuditLogs(
+  userId: string,
+  page: number,
+  pageSize: number,
+): Promise<UserAuditLogPage> {
+  const response = await request.get(`/admin/users/${encodeURIComponent(userId)}/audit-logs`, {
+    params: { page, pageSize },
+  })
   return envelopeData(response)
 }
