@@ -2,12 +2,23 @@
 import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { checkHealth, checkReadiness } from '../api/system'
 import ConnectionStatusCard from '../components/ConnectionStatusCard.vue'
-import type { ConnectionStatus } from '../types/status'
+import type { ConnectionState, ConnectionStatus } from '../types/status'
 import { apiBaseUrl, RequestError } from '../utils/request'
 
+// The two services are the single source of truth: cards, overview tiles and counters all derive from it.
 const services = [
-  { title: '后端服务', caption: 'HTTP 接口是否可访问', kind: 'server' as const, path: '/health' },
-  { title: '数据库', caption: '后端能否连上项目库', kind: 'database' as const, path: '/ready' },
+  {
+    title: '后端服务',
+    caption: 'HTTP 接口是否可访问',
+    kind: 'server' as const,
+    path: '/health',
+  },
+  {
+    title: '数据库',
+    caption: '后端能否连上项目库',
+    kind: 'database' as const,
+    path: '/ready',
+  },
 ]
 
 const timeFormatter = new Intl.DateTimeFormat('zh-CN', {
@@ -21,91 +32,84 @@ const timeFormatter = new Intl.DateTimeFormat('zh-CN', {
 
 const checking = shallowRef(false)
 const checkedAt = shallowRef<Date | null>(null)
-const backend = shallowRef<ConnectionStatus>({
-  state: 'checking',
-  description: '正在连接后端服务…',
-})
-const database = shallowRef<ConnectionStatus>({
-  state: 'checking',
-  description: '正在通过后端验证数据库连接…',
+const results = shallowRef<Record<'server' | 'database', ConnectionStatus>>({
+  server: { state: 'checking', description: '正在连接后端服务…' },
+  database: { state: 'checking', description: '正在通过后端验证数据库连接…' },
 })
 
 let controller: AbortController | undefined
 
-const stateLabels = {
+const healthyCount = computed(
+  () => services.filter((service) => results.value[service.kind].state === 'healthy').length,
+)
+const summaryState = computed<ConnectionState>(() => {
+  if (checking.value) return 'checking'
+  if (healthyCount.value === services.length) return 'healthy'
+  return services.some((service) => results.value[service.kind].state === 'unhealthy')
+    ? 'unhealthy'
+    : 'unknown'
+})
+const summary = computed(() => {
+  if (checking.value) return '正在检测'
+  if (summaryState.value === 'healthy') return '服务运行正常'
+  return summaryState.value === 'unhealthy' ? '服务需要关注' : '状态待确认'
+})
+const summaryDescription = computed(() => {
+  if (checking.value) return '正在分别验证后端接口与数据库连接。'
+  if (summaryState.value === 'healthy') return '后端接口与数据库连接均已就绪。'
+  return '下方显示了失败项，处理后可重新检测。'
+})
+
+const stateLabels: Record<ConnectionState, string> = {
   checking: '检测中',
   healthy: '正常',
   unhealthy: '异常',
   unknown: '未知',
-} as const
+}
 
-const statuses = computed(() => [backend.value, database.value])
-const totalLabel = String(services.length).padStart(2, '0')
-const healthyCount = computed(() => statuses.value.filter((s) => s.state === 'healthy').length)
+const tiles = computed(() =>
+  services.map((service) => ({
+    key: service.kind,
+    label: service.title,
+    state: results.value[service.kind].state,
+    value: stateLabels[results.value[service.kind].state],
+  })),
+)
 const checkedAtLabel = computed(() =>
   checkedAt.value ? timeFormatter.format(checkedAt.value) : '尚未检测',
 )
 
-const tiles = computed(() => [
-  {
-    key: 'backend',
-    label: '后端服务',
-    value: stateLabels[backend.value.state],
-    state: backend.value.state,
-  },
-  {
-    key: 'database',
-    label: '数据库',
-    value: stateLabels[database.value.state],
-    state: database.value.state,
-  },
-  {
-    key: 'checked',
-    label: '最近检测',
-    value: checkedAtLabel.value,
-    state: 'neutral',
-  },
-])
-
-const summaryState = computed(() => {
-  if (checking.value) return 'checking'
-  if (healthyCount.value === services.length) return 'healthy'
-  return statuses.value.some((s) => s.state === 'unhealthy') ? 'unhealthy' : 'unknown'
-})
-
-const summary = computed(() => {
-  if (checking.value) return '正在检测'
-  if (summaryState.value === 'healthy') return '服务运行正常'
-  if (summaryState.value === 'unhealthy') return '服务需要关注'
-  return '状态待确认'
-})
-
-const summaryDescription = computed(() => {
-  if (checking.value) return '正在分别验证后端接口与数据库连接。'
-  if (summaryState.value === 'healthy') return '后端接口与数据库连接均已就绪，无需处理。'
-  return '下方显示了具体失败项，处理后可重新检测。'
-})
-
-function backendUnreachable(error: unknown): boolean {
-  return error instanceof RequestError && (error.kind === 'network' || error.kind === 'timeout')
+// A network error, a timeout, or a gateway error means the backend never answered; only then
+// is the database unknowable. Every other failure belongs to the service that failed.
+function isUnreachable(error: unknown): boolean {
+  if (!(error instanceof RequestError)) return false
+  if (error.kind === 'network' || error.kind === 'timeout') return true
+  return error.httpStatus === 502 || error.httpStatus === 503 || error.httpStatus === 504
 }
 
-function healthStatus(error: unknown): ConnectionStatus {
-  return {
-    state: 'unhealthy',
-    description: backendUnreachable(error)
-      ? '无法连接后端。请确认服务已启动，并检查接口代理配置。'
-      : '后端响应异常，请检查服务日志与接口配置。',
+function serverStatus(result: PromiseSettledResult<unknown>): ConnectionStatus {
+  if (result.status === 'fulfilled') {
+    return { state: 'healthy', description: '接口可正常访问，响应正常。' }
   }
+  return isUnreachable(result.reason)
+    ? { state: 'unknown', description: '无法连接后端，请确认服务已启动并检查接口代理配置。' }
+    : { state: 'unhealthy', description: '后端响应异常，请检查服务日志与接口配置。' }
 }
 
-function readinessStatus(error: unknown): ConnectionStatus {
-  return {
-    state: backendUnreachable(error) ? 'unknown' : 'unhealthy',
-    description: backendUnreachable(error)
-      ? '后端不可达，无法确认数据库状态。'
-      : '数据库未就绪，请检查 MySQL 与后端连接配置。',
+function databaseStatus(
+  health: PromiseSettledResult<unknown>,
+  database: PromiseSettledResult<unknown>,
+): ConnectionStatus {
+  if (health.status === 'rejected' && isUnreachable(health.reason)) {
+    return { state: 'unknown', description: '后端不可达，无法确认数据库状态。' }
   }
+  if (database.status === 'fulfilled') {
+    return { state: 'healthy', description: '后端已成功访问项目数据库。' }
+  }
+  if (isUnreachable(database.reason)) {
+    return { state: 'unknown', description: '无法确认数据库状态，请稍后重试。' }
+  }
+  return { state: 'unhealthy', description: '数据库未就绪，请检查 MySQL 与后端连接配置。' }
 }
 
 async function refresh() {
@@ -115,7 +119,7 @@ async function refresh() {
   controller = current
   checking.value = true
 
-  const [backendResult, databaseResult] = await Promise.allSettled([
+  const [health, database] = await Promise.allSettled([
     checkHealth(current.signal),
     checkReadiness(current.signal),
   ])
@@ -123,17 +127,10 @@ async function refresh() {
   controller = undefined
   if (current.signal.aborted) return
 
-  backend.value =
-    backendResult.status === 'fulfilled'
-      ? { state: 'healthy', description: '接口可正常访问，响应正常。' }
-      : healthStatus(backendResult.reason)
-  database.value =
-    backendResult.status === 'rejected'
-      ? { state: 'unknown', description: '后端不可达，无法确认数据库状态。' }
-      : databaseResult.status === 'fulfilled'
-        ? { state: 'healthy', description: '后端已成功访问项目数据库。' }
-        : readinessStatus(databaseResult.reason)
-
+  results.value = {
+    server: serverStatus(health),
+    database: databaseStatus(health, database),
+  }
   checkedAt.value = new Date()
   checking.value = false
 }
@@ -158,7 +155,12 @@ onBeforeUnmount(() => {
         :aria-busy="checking"
         @click="refresh"
       >
-        <svg :class="{ 'is-spinning': checking }" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <svg
+          :class="{ 'is-spinning': checking }"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             d="M13 8a5 5 0 1 1-1.5-3.5M13 3v3h-3"
             stroke="currentColor"
@@ -182,12 +184,12 @@ onBeforeUnmount(() => {
       </div>
       <div class="hero-metric">
         <p class="hero-count" aria-label="正常连接数">
-          <strong>{{ healthyCount }}</strong>
-          <span>/ {{ totalLabel }}</span>
+          <strong>{{ String(healthyCount).padStart(2, '0') }}</strong>
+          <span>/ {{ String(services.length).padStart(2, '0') }}</span>
         </p>
         <div class="hero-meter" aria-hidden="true">
           <span
-            v-for="index in Number(totalLabel)"
+            v-for="index in services.length"
             :key="index"
             :class="{ 'is-on': index <= healthyCount }"
           />
@@ -202,6 +204,10 @@ onBeforeUnmount(() => {
         <p class="tile-value">{{ tile.value }}</p>
         <p class="tile-label">{{ tile.label }}</p>
       </div>
+      <div class="tile" data-state="neutral">
+        <p class="tile-value">{{ checkedAtLabel }}</p>
+        <p class="tile-label">最近检测</p>
+      </div>
     </div>
 
     <section class="services" aria-label="连接详情">
@@ -212,8 +218,8 @@ onBeforeUnmount(() => {
         :caption="service.caption"
         :kind="service.kind"
         :endpoint="`${apiBaseUrl}${service.path}`"
-        :state="service.kind === 'server' ? backend.state : database.state"
-        :description="service.kind === 'server' ? backend.description : database.description"
+        :state="results[service.kind].state"
+        :description="results[service.kind].description"
       />
     </section>
 
@@ -360,22 +366,10 @@ onBeforeUnmount(() => {
 
 .hero-count {
   margin: 0;
-  color: var(--hero-accent);
+  color: #d7eda8;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-}
-
-.hero[data-state='healthy'] .hero-count {
-  color: #d7eda8;
-}
-
-.hero[data-state='unhealthy'] .hero-count {
-  color: #f7c9bf;
-}
-
-.hero[data-state='unknown'] .hero-count {
-  color: #efd9a4;
 }
 
 .hero-count strong {
@@ -537,6 +531,11 @@ onBeforeUnmount(() => {
 
 .is-spinning {
   animation: spin 0.9s linear infinite;
+}
+
+.button svg {
+  width: 14px;
+  height: 14px;
 }
 
 @keyframes spin {

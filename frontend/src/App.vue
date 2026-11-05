@@ -4,11 +4,11 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const navItems = [
-  { path: '/system/status', label: '系统状态', icon: 'activity' },
-] as const
+const navItems = [{ path: '/system/status', label: '系统状态' }] as const
 
-const title = computed(() => (route.name === 'not-found' ? '页面不存在' : '运行监测'))
+const title = computed(() =>
+  typeof route.meta.title === 'string' ? route.meta.title : '校园自习室',
+)
 const environment = computed(() => (import.meta.env.DEV ? '开发环境' : '生产环境'))
 </script>
 
