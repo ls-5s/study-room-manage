@@ -51,6 +51,12 @@ export function createUserRouter(dependencies: UserRouterDependencies) {
     dependencies.requireAdmin,
     dependencies.controller.getUser,
   );
+  router.get(
+    '/admin/users/:userId/audit-logs',
+    dependencies.authenticate,
+    dependencies.requireAdmin,
+    dependencies.controller.listUserAuditLogs,
+  );
   router.patch(
     '/admin/users/:userId/status',
     dependencies.authenticate,

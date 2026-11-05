@@ -42,6 +42,20 @@ export interface CreateAdminInput {
   phone?: string | null;
 }
 
+export interface UserAuditLogItem {
+  id: string;
+  action: string;
+  reason: string | null;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  operator: {
+    id: string;
+    username: string;
+    displayName: string;
+  } | null;
+  createdAt: string;
+}
+
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, '\\$&');
 }
@@ -140,6 +154,58 @@ export class UserService {
     const user = await this.models.User.findByPk(userId);
     if (!user) throw new HttpError(404, 'NOT_FOUND', '用户不存在');
     return toAdminUserView(user);
+  }
+
+  async listUserAuditLogs(userId: string, page: number, pageSize: number) {
+    const target = await this.models.User.findByPk(userId, { attributes: ['id'] });
+    if (!target) throw new HttpError(404, 'NOT_FOUND', '用户不存在');
+
+    const { rows, count } = await this.models.AuditLog.findAndCountAll({
+      where: {
+        resource_type: 'user',
+        resource_id: userId,
+      },
+      order: [
+        ['created_at', 'DESC'],
+        ['id', 'DESC'],
+      ],
+      offset: (page - 1) * pageSize,
+      limit: pageSize,
+    });
+
+    const operatorIds = [...new Set(rows.map((row) => String(row.operator_id)))];
+    const operators =
+      operatorIds.length > 0
+        ? await this.models.User.findAll({
+            where: { id: { [Op.in]: operatorIds } },
+            attributes: ['id', 'username', 'display_name'],
+          })
+        : [];
+    const operatorById = new Map(operators.map((operator) => [String(operator.id), operator]));
+
+    return {
+      items: rows.map((row): UserAuditLogItem => {
+        const operator = operatorById.get(String(row.operator_id));
+        return {
+          id: String(row.id),
+          action: row.action,
+          reason: row.reason,
+          before: row.before_json,
+          after: row.after_json,
+          operator: operator
+            ? {
+                id: String(operator.id),
+                username: operator.username,
+                displayName: operator.display_name,
+              }
+            : null,
+          createdAt: row.created_at.toISOString(),
+        };
+      }),
+      page,
+      pageSize,
+      total: count,
+    };
   }
 
   async createAdmin(operatorId: string, input: CreateAdminInput) {

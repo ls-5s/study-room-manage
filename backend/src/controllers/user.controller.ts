@@ -32,6 +32,7 @@ export function createUserController(
   | 'changePassword'
   | 'listUsers'
   | 'createAdmin'
+  | 'listUserAuditLogs'
   | 'getUser'
   | 'changeStatus',
   RequestHandler
@@ -89,6 +90,12 @@ export function createUserController(
       const context = authenticatedRequest(request);
       const result = await users.createAdmin(context.user.id, request.body as CreateAdminInput);
       response.status(201).json(success(result, '管理员账号已创建'));
+    },
+    listUserAuditLogs: async (request, response) => {
+      const page = integerQuery(request.query.page, 1, 1_000_000);
+      const pageSize = integerQuery(request.query.pageSize, 10, 50);
+      const result = await users.listUserAuditLogs(String(request.params.userId), page, pageSize);
+      response.json(success(result, '查询成功'));
     },
     getUser: async (request, response) => {
       response.json(success(await users.getAdminUser(String(request.params.userId)), '查询成功'));
