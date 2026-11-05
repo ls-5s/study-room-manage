@@ -149,7 +149,7 @@
 
 | 领域 | 字段 | 可选值 |
 | --- | --- | --- |
-| 用户 | `role` | `student`、`admin` |
+| 用户 | `role` | `student`、`admin`、`super_admin` |
 | 用户 | `status` | `active`、`disabled` |
 | 自习室 | `status` | `open`、`closed`、`disabled` |
 | 开放时段 | `status` | `active`、`inactive` |
