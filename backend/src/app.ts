@@ -1,0 +1,47 @@
+import cors from 'cors';
+import express from 'express';
+import { createLogger } from './lib/logger.js';
+import type { Logger } from './lib/logger.js';
+import { errorHandler, HttpError, notFound } from './middleware/errors.js';
+import { createApiRouter } from './routes/index.js';
+import type { SystemRouteDependencies } from './routes/system.routes.js';
+
+export interface AppDependencies extends SystemRouteDependencies {
+  logger?: Logger;
+  corsOrigins?: readonly string[];
+}
+
+// Creating/importing the app does not read .env, open a DB connection, listen, or register signals.
+export function createApp(dependencies: AppDependencies) {
+  const app = express();
+  const logger = dependencies.logger ?? createLogger();
+  const allowedOrigins = new Set(dependencies.corsOrigins ?? []);
+  app.disable('x-powered-by');
+
+  app.use((request, response, next) => {
+    const started = performance.now();
+    response.once('finish', () => {
+      logger.info('request.completed', {
+        method: request.method,
+        statusCode: response.statusCode,
+        durationMs: Math.round(performance.now() - started),
+      });
+    });
+    next();
+  });
+
+  app.use(
+    cors({
+      origin(origin, callback) {
+        if (origin === undefined || allowedOrigins.has(origin)) callback(null, true);
+        else callback(new HttpError(403, 'FORBIDDEN', '请求来源不被允许'));
+      },
+    }),
+  );
+  app.use(express.json({ limit: '1mb' }));
+  app.use('/api/v1', createApiRouter({ probeDatabase: dependencies.probeDatabase }));
+
+  app.use(notFound);
+  app.use(errorHandler(logger));
+  return app;
+}

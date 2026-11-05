@@ -1,0 +1,100 @@
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+
+export interface DatabaseConfig {
+  host: string;
+  port: number;
+  name: string;
+  user: string;
+  password: string;
+  connectTimeoutMs: number;
+  acquireTimeoutMs: number;
+  probeTimeoutMs: number;
+}
+
+export interface ServerConfig {
+  host: string;
+  port: number;
+  nodeEnv: 'development' | 'production' | 'test';
+  corsOrigins: string[];
+  database: DatabaseConfig;
+}
+
+export class ConfigurationError extends Error {
+  constructor(key: string) {
+    super(`环境变量 ${key} 缺失或格式不正确，请检查后端环境配置。`);
+    this.name = 'ConfigurationError';
+  }
+}
+
+function required(env: NodeJS.ProcessEnv, key: string, trim = true): string {
+  const raw = env[key];
+  const value = trim ? raw?.trim() : raw;
+  if (value === undefined || value.trim().length === 0) throw new ConfigurationError(key);
+  return value;
+}
+
+function integer(env: NodeJS.ProcessEnv, key: string, fallback: number, maximum = 65_535): number {
+  const input = env[key]?.trim();
+  if (input === undefined) return fallback;
+  if (!/^\d+$/.test(input)) throw new ConfigurationError(key);
+  const value = Number(input);
+  if (!Number.isSafeInteger(value) || value < 1 || value > maximum) {
+    throw new ConfigurationError(key);
+  }
+  return value;
+}
+
+function hostname(env: NodeJS.ProcessEnv, key: string, fallback?: string): string {
+  const value = env[key] === undefined && fallback ? fallback : required(env, key);
+  // Hostnames and IP literals vary too much to validate by shape; ports are checked separately.
+  if (/\s|\//.test(value)) throw new ConfigurationError(key);
+  return value;
+}
+
+function origins(env: NodeJS.ProcessEnv): string[] {
+  const value = env.CORS_ORIGINS ?? 'http://localhost:43081,http://127.0.0.1:43081';
+  const values = value.split(',').map((origin) => origin.trim());
+  try {
+    for (const origin of values) {
+      const parsed = new URL(origin);
+      if (!['http:', 'https:'].includes(parsed.protocol) || parsed.origin !== origin) {
+        throw new Error('Invalid origin');
+      }
+    }
+  } catch {
+    throw new ConfigurationError('CORS_ORIGINS');
+  }
+  return [...new Set(values)];
+}
+
+// Pure parsing keeps tests and app imports independent from environment files.
+export function readConfig(env: NodeJS.ProcessEnv): ServerConfig {
+  const nodeEnv = env.NODE_ENV ?? 'development';
+  if (!['development', 'production', 'test'].includes(nodeEnv)) {
+    throw new ConfigurationError('NODE_ENV');
+  }
+
+  return {
+    host: hostname(env, 'HOST', '127.0.0.1'),
+    port: integer(env, 'PORT', 43080),
+    nodeEnv: nodeEnv as ServerConfig['nodeEnv'],
+    corsOrigins: origins(env),
+    database: {
+      host: hostname(env, 'DB_HOST', '127.0.0.1'),
+      port: integer(env, 'DB_PORT', 3306),
+      name: required(env, 'DB_NAME'),
+      user: required(env, 'DB_USER'),
+      password: required(env, 'DB_PASSWORD', false),
+      connectTimeoutMs: integer(env, 'DB_CONNECT_TIMEOUT_MS', 5000, 60_000),
+      acquireTimeoutMs: integer(env, 'DB_ACQUIRE_TIMEOUT_MS', 5000, 60_000),
+      probeTimeoutMs: integer(env, 'DB_PROBE_TIMEOUT_MS', 10_000, 60_000),
+    },
+  };
+}
+
+export function loadRuntimeConfig(): ServerConfig {
+  // The same relative path works from src/config and compiled dist/config.
+  dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)), quiet: true });
+  return readConfig(process.env);
+}

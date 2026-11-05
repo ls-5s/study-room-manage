@@ -1,0 +1,4 @@
+# Package-local pnpm settings; this is not a root workspace.
+settings:
+  saveExact: true
+  allowBuilds: {}

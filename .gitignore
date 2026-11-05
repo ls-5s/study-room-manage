@@ -1,0 +1,14 @@
+**/node_modules/
+**/dist/
+**/coverage/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
+backend/.db-prepare.lock
+**/.pnpm-store/
+*.log
+.playwright-cli/
+output/
+.DS_Store
+Thumbs.db

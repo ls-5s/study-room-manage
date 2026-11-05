@@ -1,0 +1,4 @@
+# pnpm 11 keeps per-project settings here. This includes only this backend package.
+saveExact: true
+allowBuilds:
+  esbuild: true
