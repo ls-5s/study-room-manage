@@ -2,17 +2,16 @@
 import {
   Calendar,
   ChatDotRound,
-  CircleCheck,
   DataAnalysis,
   DataLine,
-  Grid,
   HomeFilled,
   School,
   Tickets,
   User,
   Warning,
 } from '@element-plus/icons-vue'
-import type { Component } from 'vue'
+import { computed, type Component } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
 const { activePath } = defineProps<{
   activePath: string
@@ -21,6 +20,8 @@ const { activePath } = defineProps<{
 const emit = defineEmits<{
   navigate: [path: string]
 }>()
+
+const auth = useAuthStore()
 
 function handleSelect(index: string) {
   emit('navigate', index)
@@ -38,41 +39,60 @@ interface NavigationGroup {
   items: readonly NavigationItem[]
 }
 
-const navigationGroups: readonly NavigationGroup[] = [
-  {
+const navigationGroups = computed<readonly NavigationGroup[]>(() => {
+  if (!auth.currentUser) {
+    return [
+      {
+        key: 'system',
+        label: '公共入口',
+        items: [
+          { path: '/home', label: '浏览自习室', icon: HomeFilled },
+          { path: '/login', label: '登录', icon: User },
+          { path: '/register', label: '注册', icon: Tickets },
+        ],
+      },
+    ]
+  }
+
+  const account: NavigationGroup = {
     key: 'system',
-    label: '系统与账户',
-    items: [
-      { path: '/login', label: '登录', icon: User },
-      { path: '/register', label: '注册', icon: Tickets },
-    ],
-  },
-  {
-    key: 'student',
-    label: '学生服务',
-    items: [
-      { path: '/home', label: '自习室首页', icon: HomeFilled },
-      { path: '/reservations', label: '我的预约', icon: Calendar },
-      { path: '/violations', label: '我的违约', icon: Warning },
-      { path: '/feedback', label: '反馈工单', icon: ChatDotRound },
-      { path: '/profile', label: '个人中心', icon: User },
-    ],
-  },
-  {
-    key: 'admin',
-    label: '管理后台',
-    items: [
-      { path: '/admin/dashboard', label: '管理仪表盘', icon: DataLine },
-      { path: '/admin/study-rooms', label: '自习室管理', icon: School },
-      { path: '/admin/study-rooms/1/seats', label: '座位管理', icon: Grid },
-      { path: '/admin/reservations', label: '预约管理', icon: Tickets },
-      { path: '/admin/reservations/check-in-code', label: '签到码展示', icon: CircleCheck },
-      { path: '/admin/violations', label: '违约管理', icon: Warning },
-      { path: '/admin/feedback', label: '反馈处理', icon: ChatDotRound },
-      { path: '/admin/reports', label: '统计报表', icon: DataAnalysis },
-    ],
-  },
-]
+    label: '账号',
+    items: [{ path: '/profile', label: '个人中心', icon: User }],
+  }
+
+  if (auth.isAdmin) {
+    return [
+      account,
+      {
+        key: 'admin',
+        label: '管理后台',
+        items: [
+          { path: '/admin/dashboard', label: '管理仪表盘', icon: DataLine },
+          { path: '/admin/users', label: '用户管理', icon: User },
+          { path: '/admin/study-rooms', label: '自习室管理', icon: School },
+          { path: '/admin/reservations', label: '预约管理', icon: Tickets },
+          { path: '/admin/violations', label: '违约管理', icon: Warning },
+          { path: '/admin/feedback', label: '反馈处理', icon: ChatDotRound },
+          { path: '/admin/reports', label: '统计报表', icon: DataAnalysis },
+        ],
+      },
+    ]
+  }
+
+  return [
+    account,
+    {
+      key: 'student',
+      label: '学生服务',
+      items: [
+        { path: '/home', label: '自习室首页', icon: HomeFilled },
+        { path: '/reservations', label: '我的预约', icon: Calendar },
+        { path: '/violations', label: '我的违约', icon: Warning },
+        { path: '/feedback', label: '反馈工单', icon: ChatDotRound },
+      ],
+    },
+  ]
+})
 </script>
 
 <template>

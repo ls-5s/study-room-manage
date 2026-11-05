@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { ArrowRight, Menu as MenuIcon, Reading } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { computed, shallowRef, watch } from 'vue'
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import AppNavigation from '../components/AppNavigation.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
+import { useAuthStore } from '../stores/auth'
+import { roleLabel } from '../utils/auth-role'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 const drawerOpen = shallowRef(false)
+const logoutPending = shallowRef(false)
 
 const title = computed(() =>
   typeof route.meta.title === 'string' ? route.meta.title : '校园自习室',
@@ -15,6 +21,20 @@ const activePath = computed(() =>
   typeof route.meta.activeNav === 'string' ? route.meta.activeNav : route.path,
 )
 const environment = computed(() => (import.meta.env.DEV ? '开发环境' : '生产环境'))
+
+async function handleLogout() {
+  logoutPending.value = true
+  try {
+    await auth.logout()
+    ElMessage.success('已退出登录')
+    await router.push('/login')
+  } catch {
+    ElMessage.error('退出请求失败，本地登录状态已清理')
+    await router.push('/login')
+  } finally {
+    logoutPending.value = false
+  }
+}
 
 watch(
   () => route.fullPath,
@@ -72,6 +92,20 @@ watch(
           </div>
 
           <div class="topbar-meta">
+            <div v-if="auth.currentUser" class="account-summary">
+              <span class="account-name">{{ auth.currentUser.displayName }}</span>
+              <el-tag size="small" effect="plain" round>
+                {{ roleLabel(auth.currentUser.role) }}
+              </el-tag>
+              <el-button
+                size="small"
+                :loading="logoutPending"
+                :disabled="logoutPending"
+                @click="handleLogout"
+              >
+                退出
+              </el-button>
+            </div>
             <ThemeToggle />
             <el-tag size="small" effect="plain" round>{{ environment }}</el-tag>
             <span>v0.1.0</span>
@@ -276,6 +310,21 @@ watch(
   align-items: center;
 }
 
+.account-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-name {
+  max-width: 140px;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .topbar-leading {
   min-width: 0;
   gap: 12px;
@@ -315,10 +364,9 @@ watch(
 
 .main-content {
   width: 100%;
-  max-width: 1080px;
+  max-width: none;
   flex: 1;
-  margin: 0 auto;
-  padding: 40px;
+  padding: 36px clamp(20px, 2.5vw, 40px) 48px;
   overflow: visible;
 }
 
@@ -329,11 +377,9 @@ watch(
 .site-footer {
   display: flex;
   width: 100%;
-  max-width: 1080px;
   justify-content: space-between;
   gap: 16px;
-  margin: 0 auto;
-  padding: 24px 40px;
+  padding: 24px clamp(20px, 2.5vw, 40px);
   color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1rem;
@@ -376,7 +422,8 @@ watch(
 
   .breadcrumb > span,
   .breadcrumb > .el-icon,
-  .topbar-meta > span {
+  .topbar-meta > span,
+  .account-name {
     display: none;
   }
 
