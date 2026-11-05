@@ -7,7 +7,6 @@ import {
   DataLine,
   Grid,
   HomeFilled,
-  Monitor,
   School,
   Tickets,
   User,
@@ -44,7 +43,6 @@ const navigationGroups: readonly NavigationGroup[] = [
     key: 'system',
     label: '系统与账户',
     items: [
-      { path: '/system/status', label: '系统状态', icon: Monitor },
       { path: '/login', label: '登录', icon: User },
       { path: '/register', label: '注册', icon: Tickets },
     ],

@@ -2,7 +2,7 @@
 
 毕业设计项目，采用前后端分离架构：Vue 3 + TypeScript + Vite 前端，Node.js + Express + Sequelize 后端，MySQL 数据库。
 
-目前已完成工程搭建、数据库准备和服务状态页面。登录、预约、签到等业务功能尚在开发计划中。
+目前已完成工程搭建、数据库准备和业务页面骨架。登录、预约、签到等业务功能尚在开发计划中。
 
 ## 开发文档
 
@@ -46,7 +46,7 @@ pnpm --dir backend dev
 pnpm --dir frontend dev
 ```
 
-启动后访问 [状态页面](http://localhost:43081/system/status)，查看后端和数据库状态，点击“重新检测”刷新。
+启动后访问 [自习室首页](http://localhost:43081/home)。健康检查接口保留在后端，可通过 `http://127.0.0.1:43080/api/v1/health` 和 `http://127.0.0.1:43080/api/v1/ready` 检查服务与数据库状态。
 
 ## 常用命令
 

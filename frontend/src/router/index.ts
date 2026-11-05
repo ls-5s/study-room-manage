@@ -6,7 +6,6 @@ import { feedbackRoutes } from './modules/feedback.routes'
 import { reservationRoutes } from './modules/reservation.routes'
 import { statisticsRoutes } from './modules/statistics.routes'
 import { studyRoomRoutes } from './modules/study-room.routes'
-import { systemRoutes } from './modules/system.routes'
 import { userRoutes } from './modules/user.routes'
 import { violationRoutes } from './modules/violation.routes'
 
@@ -27,7 +26,6 @@ export const routes: RouteRecordRaw[] = [
       ...violationRoutes,
       ...feedbackRoutes,
       ...statisticsRoutes,
-      ...systemRoutes,
       {
         path: ':pathMatch(.*)*',
         name: 'not-found',

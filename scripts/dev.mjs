@@ -92,7 +92,7 @@ async function main() {
   process.on("SIGINT", () => stop(0));
   process.on("SIGTERM", () => stop(0));
   console.info("[dev] 同时启动前后端，按 Ctrl+C 统一退出。");
-  console.info("[dev] 前端默认地址：http://localhost:43081/system/status");
+  console.info("[dev] 前端默认地址：http://localhost:43081/home");
   console.info("[dev] 后端默认地址：http://127.0.0.1:43080/api/v1/health");
 
   for (const service of services) {
