@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import {
+  CircleCheck,
+  Coin,
+  Loading,
+  Monitor,
+  QuestionFilled,
+  Warning,
+} from '@element-plus/icons-vue'
+import { computed } from 'vue'
+
 const { title, caption, kind, endpoint, state, description } = defineProps<{
   title: string
   caption: string
@@ -8,134 +18,105 @@ const { title, caption, kind, endpoint, state, description } = defineProps<{
   description: string
 }>()
 
-const stateLabels = {
-  checking: '检测中',
-  healthy: '正常',
-  unhealthy: '异常',
-  unknown: '未知',
+const stateMeta = {
+  checking: { label: '检测中', tagType: 'info', icon: Loading },
+  healthy: { label: '正常', tagType: 'success', icon: CircleCheck },
+  unhealthy: { label: '异常', tagType: 'danger', icon: Warning },
+  unknown: { label: '未知', tagType: 'warning', icon: QuestionFilled },
 } as const
+
+const serviceIcon = computed(() => (kind === 'server' ? Monitor : Coin))
+const currentState = computed(() => stateMeta[state])
 </script>
 
 <template>
-  <article class="connection-card" :data-state="state" :aria-label="title">
-    <span class="state-bar" aria-hidden="true" />
-
-    <header class="card-header">
-      <span class="service-icon" aria-hidden="true">
-        <svg v-if="kind === 'server'" viewBox="0 0 20 20" fill="none">
-          <rect x="3" y="4" width="14" height="5" rx="1.5" />
-          <rect x="3" y="11" width="14" height="5" rx="1.5" />
-          <path d="M6 6.5h.01M6 13.5h.01M12 6.5h2M12 13.5h2" />
-        </svg>
-        <svg v-else viewBox="0 0 20 20" fill="none">
-          <ellipse cx="10" cy="5" rx="6" ry="2.4" />
-          <path
-            d="M4 5v5c0 1.3 2.7 2.4 6 2.4s6-1.1 6-2.4V5M4 10v5c0 1.3 2.7 2.4 6 2.4s6-1.1 6-2.4v-5"
-          />
-        </svg>
-      </span>
-      <div class="card-heading">
-        <h2 class="card-title">{{ title }}</h2>
-        <p class="card-caption">{{ caption }}</p>
+  <el-card
+    class="connection-card"
+    :class="`connection-card--${state}`"
+    shadow="never"
+    tag="article"
+    :aria-label="title"
+  >
+    <template #header>
+      <div class="card-header">
+        <span class="service-icon" aria-hidden="true">
+          <el-icon><component :is="serviceIcon" /></el-icon>
+        </span>
+        <div class="card-heading">
+          <h3 class="card-title">{{ title }}</h3>
+          <p class="card-caption">{{ caption }}</p>
+        </div>
+        <el-tag
+          class="card-state"
+          :type="currentState.tagType"
+          effect="light"
+          round
+          role="status"
+          aria-live="polite"
+        >
+          <el-icon :class="{ 'is-spinning': state === 'checking' }" aria-hidden="true">
+            <component :is="currentState.icon" />
+          </el-icon>
+          {{ currentState.label }}
+        </el-tag>
       </div>
-      <p class="card-state" role="status" aria-live="polite">
-        <span class="state-dot" aria-hidden="true" />
-        {{ stateLabels[state] }}
-      </p>
-    </header>
+    </template>
 
     <p class="card-description">{{ description }}</p>
 
     <footer class="card-footer">
-      <span class="endpoint">
-        <span class="endpoint-method">GET</span>
-        <code>{{ endpoint }}</code>
-      </span>
-      <span class="endpoint-arrow" aria-hidden="true">
-        <svg viewBox="0 0 16 16" fill="none">
-          <path
-            d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"
-            stroke="currentColor"
-            stroke-width="1.3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </span>
+      <el-tag class="endpoint-method" size="small" effect="plain">GET</el-tag>
+      <code class="endpoint" :title="endpoint">{{ endpoint }}</code>
     </footer>
-  </article>
+  </el-card>
 </template>
 
 <style scoped>
 .connection-card {
   --state-color: var(--status-ok);
-  --state-tint: var(--status-ok-tint);
-  position: relative;
+  --state-border: var(--status-ok-border);
   overflow: hidden;
-  padding: 20px 20px 18px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
   transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    border-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.connection-card:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 8px 20px -16px #24342b66;
-}
-
-.connection-card[data-state='unhealthy'] {
+.connection-card--unhealthy {
   --state-color: var(--status-bad);
-  --state-tint: var(--status-bad-tint);
-  border-color: var(--status-bad-border);
+  --state-border: var(--status-bad-border);
 }
 
-.connection-card[data-state='unknown'] {
+.connection-card--unknown {
   --state-color: var(--status-warn);
-  --state-tint: var(--status-warn-tint);
+  --state-border: var(--status-warn-border);
 }
 
-.connection-card[data-state='checking'] {
+.connection-card--checking {
   --state-color: var(--status-info);
-  --state-tint: var(--status-info-tint);
-}
-
-.state-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: var(--state-color);
-  opacity: 0.9;
+  --state-border: var(--status-info-border);
 }
 
 .card-header {
   display: flex;
+  min-width: 0;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
 }
 
 .service-icon {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   place-items: center;
-  border-radius: 9px;
+  border: 1px solid var(--status-info-border);
+  border-radius: 8px;
   color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.service-icon svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  stroke-width: 1.3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  background: var(--blue-50);
+  font-size: 20px;
 }
 
 .card-heading {
@@ -144,97 +125,106 @@ const stateLabels = {
 
 .card-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 620;
-  line-height: 1.35;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
 }
 
 .card-caption {
   margin: 2px 0 0;
   color: var(--text-muted);
-  font-size: 10.5px;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .card-state {
-  display: inline-flex;
   flex-shrink: 0;
-  align-items: center;
-  gap: 5px;
-  margin: 0 0 0 auto;
-  padding: 3px 9px;
-  border-radius: 999px;
-  color: var(--state-color);
-  background: var(--state-tint);
-  font-size: 10.5px;
-  font-weight: 620;
-  line-height: 1.6;
+  margin-inline-start: auto;
+  font-weight: 600;
 }
 
-.state-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
+.card-state .el-icon {
+  margin-inline-end: 4px;
+  font-size: 12px;
 }
 
 .card-description {
-  margin: 15px 0 0;
+  min-height: 0;
+  margin: 0;
   color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.65;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
 }
 
 .card-footer {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 15px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.endpoint {
-  display: flex;
   min-width: 0;
   align-items: center;
-  gap: 7px;
-  color: var(--text-muted);
-  font-size: 10.5px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .endpoint-method {
   flex-shrink: 0;
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.endpoint code {
+.endpoint {
+  min-width: 0;
   overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.endpoint-arrow {
-  display: inline-flex;
-  flex-shrink: 0;
-  margin-left: auto;
-  color: var(--text-muted);
+.connection-card :deep(.el-card__header) {
+  padding: 24px 24px 0;
+  border-bottom: 0;
 }
 
-.endpoint-arrow svg {
-  width: 13px;
-  height: 13px;
+.connection-card :deep(.el-card__body) {
+  padding: 16px 24px 24px;
 }
 
-@media (max-width: 480px) {
+.is-spinning {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (hover: hover) {
+  .connection-card:hover {
+    border-color: var(--state-border);
+    box-shadow: var(--shadow-raised);
+  }
+}
+
+@media (max-width: 600px) {
+  .card-header {
+    flex-wrap: wrap;
+  }
+
+  .connection-card :deep(.el-card__header),
+  .connection-card :deep(.el-card__body) {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
   .connection-card {
-    padding: 16px 16px 15px;
+    transition: none;
+  }
+
+  .is-spinning {
+    animation: none;
   }
 }
 </style>

@@ -1,20 +1,45 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import NotFoundView from '../views/NotFoundView.vue'
-import SystemStatusView from '../views/SystemStatusView.vue'
+import AuthLayout from '../layouts/AuthLayout.vue'
+import DefaultLayout from '../layouts/DefaultLayout.vue'
+import { authRoutes } from './modules/auth.routes'
+import { feedbackRoutes } from './modules/feedback.routes'
+import { reservationRoutes } from './modules/reservation.routes'
+import { statisticsRoutes } from './modules/statistics.routes'
+import { studyRoomRoutes } from './modules/study-room.routes'
+import { systemRoutes } from './modules/system.routes'
+import { userRoutes } from './modules/user.routes'
+import { violationRoutes } from './modules/violation.routes'
 
 export const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/system/status' },
   {
-    path: '/system/status',
-    name: 'system-status',
-    component: SystemStatusView,
-    meta: { title: '系统状态' },
+    path: '/',
+    component: AuthLayout,
+    children: authRoutes,
   },
   {
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: NotFoundView,
-    meta: { title: '页面不存在' },
+    path: '/',
+    component: DefaultLayout,
+    children: [
+      { path: '', redirect: '/home' },
+      ...userRoutes,
+      ...studyRoomRoutes,
+      ...reservationRoutes,
+      ...violationRoutes,
+      ...feedbackRoutes,
+      ...statisticsRoutes,
+      ...systemRoutes,
+      {
+        path: ':pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('../views/error/NotFoundView.vue'),
+        meta: {
+          title: '页面不存在',
+          description: '当前地址没有对应的系统页面。',
+          access: 'public',
+          requiresAuth: false,
+        },
+      },
+    ],
   },
 ]
 

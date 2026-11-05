@@ -1,0 +1,151 @@
+<script setup lang="ts">
+import {
+  Calendar,
+  ChatDotRound,
+  CircleCheck,
+  DataAnalysis,
+  DataLine,
+  Grid,
+  HomeFilled,
+  Monitor,
+  School,
+  Tickets,
+  User,
+  Warning,
+} from '@element-plus/icons-vue'
+import type { Component } from 'vue'
+
+const { activePath } = defineProps<{
+  activePath: string
+}>()
+
+const emit = defineEmits<{
+  navigate: [path: string]
+}>()
+
+function handleSelect(index: string) {
+  emit('navigate', index)
+}
+
+interface NavigationItem {
+  path: string
+  label: string
+  icon: Component
+}
+
+interface NavigationGroup {
+  key: 'student' | 'admin' | 'system'
+  label: string
+  items: readonly NavigationItem[]
+}
+
+const navigationGroups: readonly NavigationGroup[] = [
+  {
+    key: 'system',
+    label: '系统与账户',
+    items: [
+      { path: '/system/status', label: '系统状态', icon: Monitor },
+      { path: '/login', label: '登录', icon: User },
+      { path: '/register', label: '注册', icon: Tickets },
+    ],
+  },
+  {
+    key: 'student',
+    label: '学生服务',
+    items: [
+      { path: '/home', label: '自习室首页', icon: HomeFilled },
+      { path: '/reservations', label: '我的预约', icon: Calendar },
+      { path: '/violations', label: '我的违约', icon: Warning },
+      { path: '/feedback', label: '反馈工单', icon: ChatDotRound },
+      { path: '/profile', label: '个人中心', icon: User },
+    ],
+  },
+  {
+    key: 'admin',
+    label: '管理后台',
+    items: [
+      { path: '/admin/dashboard', label: '管理仪表盘', icon: DataLine },
+      { path: '/admin/study-rooms', label: '自习室管理', icon: School },
+      { path: '/admin/study-rooms/1/seats', label: '座位管理', icon: Grid },
+      { path: '/admin/reservations', label: '预约管理', icon: Tickets },
+      { path: '/admin/reservations/check-in-code', label: '签到码展示', icon: CircleCheck },
+      { path: '/admin/violations', label: '违约管理', icon: Warning },
+      { path: '/admin/feedback', label: '反馈处理', icon: ChatDotRound },
+      { path: '/admin/reports', label: '统计报表', icon: DataAnalysis },
+    ],
+  },
+]
+</script>
+
+<template>
+  <nav class="navigation" aria-label="主导航">
+    <el-menu :default-active="activePath" class="navigation-menu" router @select="handleSelect">
+      <template v-for="group in navigationGroups" :key="group.key">
+        <li class="navigation-group-label" role="presentation">{{ group.label }}</li>
+        <el-menu-item v-for="item in group.items" :key="item.path" :index="item.path">
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.label }}</span>
+        </el-menu-item>
+      </template>
+    </el-menu>
+  </nav>
+</template>
+
+<style scoped>
+.navigation {
+  width: 100%;
+  min-width: 0;
+}
+
+.navigation-menu {
+  --el-menu-bg-color: transparent;
+  --el-menu-text-color: var(--sidebar-text);
+  --el-menu-hover-bg-color: var(--sidebar-surface-hover);
+  --el-menu-active-color: var(--sidebar-text-strong);
+  border-right: 0;
+}
+
+.navigation-menu :deep(.el-menu-item) {
+  min-height: 44px;
+  margin-bottom: 4px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.navigation-menu :deep(.el-menu-item.is-active) {
+  background: var(--sidebar-surface-selected);
+  font-weight: 600;
+}
+
+.navigation-menu :deep(.el-menu-item.is-active)::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  background: var(--accent);
+  content: '';
+  transform: translateY(-50%);
+}
+
+.navigation-menu :deep(.el-menu-item:hover) {
+  color: var(--sidebar-text-strong);
+}
+
+.navigation-group-label {
+  margin: 20px 16px 8px;
+  color: var(--sidebar-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1rem;
+  list-style: none;
+}
+
+.navigation-group-label:first-child {
+  margin-top: 0;
+}
+</style>
