@@ -11,7 +11,8 @@ try {
   const config = loadRuntimeConfig();
   const database = createDatabase(config.database);
   const app = createApp({
-    probeDatabase: database.probe,
+    database,
+    auth: config.auth,
     corsOrigins: config.corsOrigins,
     logger,
   });

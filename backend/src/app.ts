@@ -1,12 +1,15 @@
 import cors from 'cors';
 import express from 'express';
+import type { AuthConfig } from './config/env.js';
+import type { Database } from './config/database.js';
 import { createLogger } from './lib/logger.js';
 import type { Logger } from './lib/logger.js';
 import { errorHandler, HttpError, notFound } from './middleware/errors.js';
 import { createApiRouter } from './routes/index.js';
-import type { SystemRouteDependencies } from './routes/system.routes.js';
 
-export interface AppDependencies extends SystemRouteDependencies {
+export interface AppDependencies {
+  database: Database;
+  auth: AuthConfig;
   logger?: Logger;
   corsOrigins?: readonly string[];
 }
@@ -39,7 +42,14 @@ export function createApp(dependencies: AppDependencies) {
     }),
   );
   app.use(express.json({ limit: '1mb' }));
-  app.use('/api/v1', createApiRouter({ probeDatabase: dependencies.probeDatabase }));
+  app.use(
+    '/api/v1',
+    createApiRouter({
+      probeDatabase: dependencies.database.probe,
+      database: dependencies.database,
+      auth: dependencies.auth,
+    }),
+  );
 
   app.use(notFound);
   app.use(errorHandler(logger));

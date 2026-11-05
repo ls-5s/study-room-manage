@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import type { ErrorCode } from '../types/api.js';
+import type { ErrorCode, ErrorDetails } from '../types/api.js';
 import { failure } from '../types/api.js';
 import type { Logger } from '../lib/logger.js';
 
@@ -8,6 +8,8 @@ export class HttpError extends Error {
     readonly statusCode: number,
     readonly code: ErrorCode,
     message: string,
+    readonly details: ErrorDetails | null = null,
+    readonly headers: Readonly<Record<string, string>> = {},
   ) {
     super(message);
     this.name = 'HttpError';
@@ -28,11 +30,16 @@ export function errorHandler(logger: Logger): ErrorRequestHandler {
     let statusCode = 500;
     let code: ErrorCode = 'INTERNAL_ERROR';
     let message = '服务器内部错误，请稍后重试';
+    let details: ErrorDetails | null = null;
 
     if (error instanceof HttpError) {
       statusCode = error.statusCode;
       code = error.code;
       message = error.message;
+      details = error.details;
+      for (const [name, value] of Object.entries(error.headers)) {
+        response.setHeader(name, value);
+      }
     } else if (typeof error === 'object' && error !== null && 'type' in error) {
       if (error.type === 'entity.parse.failed') {
         statusCode = 400;
@@ -52,6 +59,6 @@ export function errorHandler(logger: Logger): ErrorRequestHandler {
         method: request.method,
       });
     }
-    response.status(statusCode).json(failure(code, message));
+    response.status(statusCode).json(failure(code, message, details));
   };
 }

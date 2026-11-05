@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { readFile, writeFile, open, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -6,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse } from 'dotenv';
 import { createConnection } from 'mysql2/promise';
 import { verifyApplication } from './application-verification.js';
+import { executeAdministratorQuery } from './admin-mysql.js';
 import {
   insertGeneratedPassword,
   PreparationError,
@@ -17,19 +17,6 @@ const backendDirectory = fileURLToPath(new URL('../', import.meta.url));
 const environmentPath = resolve(backendDirectory, '.env');
 const examplePath = resolve(backendDirectory, '.env.example');
 const lockPath = resolve(backendDirectory, '.db-prepare.lock');
-
-// Only this fixed shell program is passed to sh; all SQL is sent through stdin.
-// Root credentials remain inside the existing container and are never returned.
-const administratorCommand = `set -eu
-if [ -n "\${MYSQL_ROOT_PASSWORD_FILE:-}" ]; then
-  MYSQL_PWD="$(cat "$MYSQL_ROOT_PASSWORD_FILE")"
-elif [ -n "\${MYSQL_ROOT_PASSWORD:-}" ]; then
-  MYSQL_PWD="$MYSQL_ROOT_PASSWORD"
-else
-  exit 78
-fi
-export MYSQL_PWD
-exec mysql --protocol=socket --user=root --batch --skip-column-names --raw --binary-mode=1 --default-character-set=utf8mb4 --connect-timeout=5`;
 
 async function readEnvironment(): Promise<{ contents: string; exists: boolean }> {
   try {
@@ -46,29 +33,6 @@ async function readEnvironment(): Promise<{ contents: string; exists: boolean }>
   }
 }
 
-function executeAdministratorQuery(containerName: string, sql: string): Promise<string> {
-  try {
-    const output = execFileSync(
-      'docker',
-      ['exec', '-i', containerName, 'sh', '-c', administratorCommand],
-      {
-        input: `SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES';\n${sql}\n`,
-        encoding: 'utf8',
-        timeout: 15_000,
-        maxBuffer: 1024 * 1024,
-        stdio: ['pipe', 'pipe', 'pipe'],
-        windowsHide: true,
-      },
-    );
-    return Promise.resolve(output.trim());
-  } catch {
-    // Driver/CLI errors can contain complete SQL, including account passwords.
-    throw new PreparationError(
-      'MySQL 管理操作失败，请检查 Docker、目标容器及管理员配置；未输出敏感错误内容。',
-    );
-  }
-}
-
 export async function main(): Promise<void> {
   let lock: Awaited<ReturnType<typeof open>>;
   try {
@@ -81,7 +45,7 @@ export async function main(): Promise<void> {
     const environment = await readEnvironment();
     const config = readPreparationConfig(parse(environment.contents));
     await prepareDatabase(config, {
-      adminQuery: (sql) => executeAdministratorQuery(config.containerName, sql),
+      adminQuery: async (sql) => executeAdministratorQuery(config.containerName, sql),
       verifyApplication: (applicationConfig, withDatabase) =>
         verifyApplication(applicationConfig, withDatabase, createConnection),
       persistGeneratedPassword: async (password) => {
