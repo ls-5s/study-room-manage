@@ -1,303 +1,240 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { ConnectionState } from '../types/status'
-
-const { title, subtitle, kind, endpoint, state, description } = defineProps<{
+const { title, caption, kind, endpoint, state, description } = defineProps<{
   title: string
-  subtitle: string
+  caption: string
   kind: 'server' | 'database'
   endpoint: string
-  state: ConnectionState
+  state: 'checking' | 'healthy' | 'unhealthy' | 'unknown'
   description: string
 }>()
 
-const stateLabels: Record<ConnectionState, string> = {
+const stateLabels = {
   checking: '检测中',
-  healthy: '连接正常',
-  unhealthy: '连接异常',
-  unknown: '状态未知',
-}
-const stateLabel = computed(() => stateLabels[state])
+  healthy: '正常',
+  unhealthy: '异常',
+  unknown: '未知',
+} as const
 </script>
 
 <template>
-  <section class="connection-card" :data-state="state" :aria-label="title">
-    <div class="card-heading">
+  <article class="connection-card" :data-state="state" :aria-label="title">
+    <span class="state-bar" aria-hidden="true" />
+
+    <header class="card-header">
       <span class="service-icon" aria-hidden="true">
-        <svg v-if="kind === 'server'" viewBox="0 0 24 24" fill="none">
-          <rect x="4" y="4" width="16" height="6" rx="2" />
-          <rect x="4" y="14" width="16" height="6" rx="2" />
-          <path d="M8 7h.01M8 17h.01M15 7h2M15 17h2" />
+        <svg v-if="kind === 'server'" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="4" width="14" height="5" rx="1.5" />
+          <rect x="3" y="11" width="14" height="5" rx="1.5" />
+          <path d="M6 6.5h.01M6 13.5h.01M12 6.5h2M12 13.5h2" />
         </svg>
-        <svg v-else viewBox="0 0 24 24" fill="none">
-          <ellipse cx="12" cy="5.5" rx="7.5" ry="3" />
+        <svg v-else viewBox="0 0 20 20" fill="none">
+          <ellipse cx="10" cy="5" rx="6" ry="2.4" />
           <path
-            d="M4.5 5.5v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6M4.5 11.5v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"
+            d="M4 5v5c0 1.3 2.7 2.4 6 2.4s6-1.1 6-2.4V5M4 10v5c0 1.3 2.7 2.4 6 2.4s6-1.1 6-2.4v-5"
           />
         </svg>
       </span>
-      <div class="card-titles">
-        <h3 class="card-title">{{ title }}</h3>
-        <p class="card-subtitle">{{ subtitle }}</p>
+      <div class="card-heading">
+        <h2 class="card-title">{{ title }}</h2>
+        <p class="card-caption">{{ caption }}</p>
       </div>
-      <span class="card-state" role="status" aria-live="polite" aria-atomic="true">
-        <span class="sr-only">{{ title }}：</span>
-        <svg
-          v-if="state === 'healthy'"
-          class="state-check"
-          viewBox="0 0 16 16"
-          fill="none"
-          aria-hidden="true"
-        >
+      <p class="card-state" role="status" aria-live="polite">
+        <span class="state-dot" aria-hidden="true" />
+        {{ stateLabels[state] }}
+      </p>
+    </header>
+
+    <p class="card-description">{{ description }}</p>
+
+    <footer class="card-footer">
+      <span class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <code>{{ endpoint }}</code>
+      </span>
+      <span class="endpoint-arrow" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="none">
           <path
-            d="m4 8 2.5 2.5L12 5"
+            d="M3 8h9M8.5 4.5 12 8l-3.5 3.5"
             stroke="currentColor"
-            stroke-width="1.7"
+            stroke-width="1.3"
             stroke-linecap="round"
             stroke-linejoin="round"
           />
         </svg>
-        <span v-else-if="state === 'checking'" class="spinner" aria-hidden="true" />
-        <span v-else class="state-symbol" aria-hidden="true">{{
-          state === 'unknown' ? '?' : '!'
-        }}</span>
-        {{ stateLabel }}
       </span>
-    </div>
-    <p class="card-description">{{ description }}</p>
-    <div class="card-endpoint">
-      <span class="request-method">GET</span>
-      <code class="endpoint-path">{{ endpoint }}</code>
-      <svg class="endpoint-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path
-          d="m5.5 4-4 4 4 4m5-8 4 4-4 4"
-          stroke="currentColor"
-          stroke-width="1.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </div>
-  </section>
+    </footer>
+  </article>
 </template>
 
 <style scoped>
 .connection-card {
-  --state-color: #796134;
-  --state-background: #f7f0e3;
-  min-width: 0;
-  padding: 24px;
+  --state-color: var(--status-ok);
+  --state-tint: var(--status-ok-tint);
+  position: relative;
+  overflow: hidden;
+  padding: 20px 20px 18px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 2px 3px #263f3003;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
-.connection-card[data-state='healthy'] {
-  --state-color: #3b6848;
-  --state-background: #eef5e9;
+.connection-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 20px -16px #24342b66;
 }
 
 .connection-card[data-state='unhealthy'] {
-  --state-color: #ab4237;
-  --state-background: #fcf0ed;
+  --state-color: var(--status-bad);
+  --state-tint: var(--status-bad-tint);
+  border-color: var(--status-bad-border);
+}
+
+.connection-card[data-state='unknown'] {
+  --state-color: var(--status-warn);
+  --state-tint: var(--status-warn-tint);
 }
 
 .connection-card[data-state='checking'] {
-  --state-color: #42698c;
-  --state-background: #eef3f9;
+  --state-color: var(--status-info);
+  --state-tint: var(--status-info-tint);
 }
 
-.card-heading {
+.state-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--state-color);
+  opacity: 0.9;
+}
+
+.card-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
 }
 
 .service-icon {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
   place-items: center;
-  border: 1px solid #e5eadd;
-  border-radius: 12px;
-  color: #546e4d;
-  background: #f5f7f0;
+  border-radius: 9px;
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .service-icon svg {
-  width: 23px;
-  height: 23px;
+  width: 18px;
+  height: 18px;
   stroke: currentColor;
-  stroke-width: 1.4;
+  stroke-width: 1.3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.card-titles {
+.card-heading {
   min-width: 0;
-}
-
-.card-subtitle {
-  margin: 3px 0 0;
-  color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.5;
 }
 
 .card-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.5;
+  font-size: 14px;
+  font-weight: 620;
+  line-height: 1.35;
+}
+
+.card-caption {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  line-height: 1.4;
 }
 
 .card-state {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  padding: 5px 9px;
-  border: 1px solid color-mix(in srgb, var(--state-color) 10%, transparent);
-  border-radius: 6px;
+  gap: 5px;
+  margin: 0 0 0 auto;
+  padding: 3px 9px;
+  border-radius: 999px;
   color: var(--state-color);
-  background: var(--state-background);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.5;
+  background: var(--state-tint);
+  font-size: 10.5px;
+  font-weight: 620;
+  line-height: 1.6;
 }
 
-.state-check {
-  width: 14px;
-  height: 14px;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.state-symbol {
-  display: grid;
-  width: 13px;
-  height: 13px;
-  place-items: center;
-  border: 1px solid currentColor;
+.state-dot {
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1;
+  background: currentColor;
 }
 
 .card-description {
-  margin: 20px 0 0;
+  margin: 15px 0 0;
   color: var(--text-secondary);
   font-size: 12px;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
+  line-height: 1.65;
 }
 
-.card-endpoint {
+.card-footer {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid #edf0e9;
-  color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.5;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
-.request-method {
-  flex-shrink: 0;
-  padding: 2px 5px;
-  border-radius: 4px;
-  color: #526949;
-  background: #f0f3eb;
-  font-size: 9px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.endpoint-path {
+.endpoint {
+  display: flex;
   min-width: 0;
-  overflow-wrap: anywhere;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 10.5px;
 }
 
-.endpoint-icon {
-  width: 14px;
-  height: 14px;
+.endpoint-method {
+  flex-shrink: 0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.endpoint code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.endpoint-arrow {
+  display: inline-flex;
   flex-shrink: 0;
   margin-left: auto;
-  color: #929f8d;
+  color: var(--text-muted);
 }
 
-.spinner {
-  width: 11px;
-  height: 11px;
-  border: 1.5px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.endpoint-arrow svg {
+  width: 13px;
+  height: 13px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation: none;
-  }
-}
-
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .connection-card {
-    padding: 16px;
-    border-radius: 12px;
-  }
-
-  .card-heading {
-    gap: 10px;
-  }
-  .service-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-  .service-icon svg {
-    width: 20px;
-    height: 20px;
-  }
-  .card-title {
-    font-size: 14px;
-  }
-  .card-subtitle {
-    margin-top: 2px;
-    font-size: 10px;
-  }
-  .card-state {
-    gap: 3px;
-    padding: 4px 6px;
-    font-size: 10px;
-  }
-  .card-description {
-    margin-top: 12px;
-    font-size: 11px;
-  }
-  .card-endpoint {
-    margin-top: 12px;
-    padding-top: 10px;
-    font-size: 10px;
+    padding: 16px 16px 15px;
   }
 }
 </style>

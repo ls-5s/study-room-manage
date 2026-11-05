@@ -1,19 +1,33 @@
 :root {
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: #26382e;
-  background: #f5f6f2;
+  color: #22322a;
+  background: #f4f6f1;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --text: #26382e;
-  --text-secondary: #526258;
-  --text-muted: #6c786f;
-  --surface: #fff;
-  --border: #e1e6dc;
-  --accent: #29543f;
-  --accent-soft: #eaf0e5;
-  --highlight: #d5eda6;
+
+  --text: #22322a;
+  --text-secondary: #4a5a50;
+  --text-muted: #75817a;
+  --surface: #ffffff;
+  --surface-soft: #f7f8f4;
+  --border: #e5e9e0;
+  --border-strong: #d4dbcc;
+  --accent: #2c5843;
+  --accent-hover: #1f4231;
+  --accent-soft: #eaf1e4;
+  --accent-contrast: #eef6e8;
+
+  --status-ok: #3c6b4d;
+  --status-ok-tint: #edf5e8;
+  --status-bad: #a8433a;
+  --status-bad-tint: #fbefed;
+  --status-bad-border: #efd9d4;
+  --status-warn: #8a6a2f;
+  --status-warn-tint: #f9f2e2;
+  --status-info: #3e6383;
+  --status-info-tint: #eef3f8;
 }
 
 * {
@@ -27,7 +41,7 @@ body {
 
 ::selection {
   color: #203d2d;
-  background: #d5eda6;
+  background: #d7eda8;
 }
 
 button,
@@ -47,20 +61,20 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid #8db9a8;
-  outline-offset: 4px;
+  outline: 2px solid #7fae94;
+  outline-offset: 3px;
 }
 
 .button {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 38px;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 7px;
+  padding: 8px 14px;
   border: 1px solid transparent;
-  border-radius: 10px;
-  font-size: 13px;
+  border-radius: 9px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
   text-decoration: none;
@@ -71,21 +85,27 @@ button {
 }
 
 .button-primary {
-  color: white;
+  color: #fff;
   background: var(--accent);
+  box-shadow: 0 6px 14px -10px #1f4231;
 }
 
 .button-primary:hover:not(:disabled) {
-  background: #1c402e;
-  box-shadow: 0 3px 8px #203d2d14;
+  background: var(--accent-hover);
 }
 
 .button:disabled {
-  opacity: 0.7;
-  cursor: wait;
+  cursor: progress;
+  opacity: 0.75;
 }
 
 .button svg {
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
 }
