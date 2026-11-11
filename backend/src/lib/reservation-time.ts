@@ -47,6 +47,15 @@ const businessFormatter = new Intl.DateTimeFormat('en-CA', {
   hour12: false,
 });
 
+/** Human readable business time, e.g. `2026-11-12 19:15`, for user facing messages. */
+export function toBusinessText(value: Date): string {
+  const parts = businessFormatter.formatToParts(value);
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '00';
+  const hour = pick('hour') === '24' ? '00' : pick('hour');
+  return `${pick('year')}-${pick('month')}-${pick('day')} ${hour}:${pick('minute')}`;
+}
+
 /** Formats an instant as an ISO 8601 string with the fixed Asia/Shanghai offset. */
 export function toBusinessIso(value: Date): string {
   const parts = businessFormatter.formatToParts(value);

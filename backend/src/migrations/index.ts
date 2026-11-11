@@ -6,6 +6,8 @@ import { createStudyRoomTablesMigration } from './004-create-study-room-tables.j
 import { fixSeatBatchIndexMigration } from './005-fix-seat-batch-index.js';
 import { createReservationTablesMigration } from './006-create-reservation-tables.js';
 import { addRoomCheckInNonceMigration } from './007-add-room-check-in-nonce.js';
+import { createSystemSettingsMigration } from './008-create-system-settings.js';
+import { createViolationsMigration } from './009-create-violations.js';
 import type { Migration } from './types.js';
 import type { MigrationSqlExecutor } from './types.js';
 
@@ -17,6 +19,8 @@ export const migrations: readonly Migration[] = [
   fixSeatBatchIndexMigration,
   createReservationTablesMigration,
   addRoomCheckInNonceMigration,
+  createSystemSettingsMigration,
+  createViolationsMigration,
 ];
 
 export async function runMigrations(

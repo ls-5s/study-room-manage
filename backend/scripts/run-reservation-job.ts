@@ -4,8 +4,10 @@ import { createLogger } from '../src/lib/logger.js';
 import { createAuthenticationModels } from '../src/models/index.js';
 import { createStudyRoomModels } from '../src/models/study-room-models.js';
 import { createReservationModels } from '../src/models/reservation-models.js';
+import { createViolationModels } from '../src/models/violation-models.js';
 import { ReservationStateJob } from '../src/jobs/reservation-state.job.js';
-import { NoopViolationPort } from '../src/services/violation.port.js';
+import { SettingsService } from '../src/services/settings.service.js';
+import { ViolationService } from '../src/services/violation.service.js';
 
 function parseNow(): Date {
   const index = process.argv.indexOf('--now');
@@ -32,7 +34,14 @@ async function main() {
       User: authModels.User,
       AuditLog: authModels.AuditLog,
     });
-    const job = new ReservationStateJob(reservationModels, new NoopViolationPort(), { logger });
+    const violationModels = createViolationModels(database.sequelize, {
+      User: authModels.User,
+      Reservation: reservationModels.Reservation,
+      AuditLog: authModels.AuditLog,
+    });
+    const settingsService = new SettingsService(violationModels);
+    const violationService = new ViolationService(violationModels, settingsService, { logger });
+    const job = new ReservationStateJob(reservationModels, violationService, { logger });
     const result = await job.run(now);
     console.info(JSON.stringify({ now: now.toISOString(), ...result }));
   } finally {

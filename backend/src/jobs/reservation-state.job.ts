@@ -150,7 +150,9 @@ export class ReservationStateJob {
         { transaction },
       );
 
-      await this.violations.createFromNoShow(id);
+      // Joins the caller's transaction: the violation must commit or roll back together with
+      // the status change, and the caller already holds the user row lock.
+      await this.violations.createFromNoShow(id, transaction);
       return true;
     });
   }

@@ -6,6 +6,7 @@ import { createUserController } from '../controllers/user.controller.js';
 import { createStudyRoomController } from '../controllers/study-room.controller.js';
 import { createReservationController } from '../controllers/reservation.controller.js';
 import { createCheckInController } from '../controllers/check-in.controller.js';
+import { createViolationController } from '../controllers/violation.controller.js';
 import { createUserRateLimiter } from '../lib/user-rate-limit.js';
 import type { Logger } from '../lib/logger.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -14,6 +15,7 @@ import { verifyTokenOnly } from '../middleware/verify-token.js';
 import { createAuthenticationModels } from '../models/index.js';
 import { createStudyRoomModels } from '../models/study-room-models.js';
 import { createReservationModels } from '../models/reservation-models.js';
+import { createViolationModels } from '../models/violation-models.js';
 import { ReservationStateJob } from '../jobs/reservation-state.job.js';
 import { AuthService } from '../services/auth.service.js';
 import { SessionService } from '../services/session.service.js';
@@ -23,10 +25,12 @@ import { ReservationService } from '../services/reservation.service.js';
 import { ReservationAvailabilityAdapter } from '../services/reservation-availability.adapter.js';
 import { CheckInService } from '../services/check-in.service.js';
 import { CheckInCodeService } from '../services/check-in-code.service.js';
-import { NoopViolationPort } from '../services/violation.port.js';
+import { SettingsService } from '../services/settings.service.js';
+import { ViolationService } from '../services/violation.service.js';
 import { createAdminRoomRouter } from './admin-room.routes.js';
 import { createAdminReservationRouter } from './admin-reservation.routes.js';
 import { createReservationRouter } from './reservation.routes.js';
+import { createViolationRouter } from './violation.routes.js';
 import { createStudyRoomRouter } from './study-room.routes.js';
 import { createAuthRouter } from './auth.routes.js';
 import { createSystemRouter } from './system.routes.js';
@@ -71,8 +75,19 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
   const studyRoomService = new StudyRoomService(studyRoomModels, availability);
   const studyRoomController = createStudyRoomController(studyRoomService);
 
+  const violationModels = createViolationModels(dependencies.database.sequelize, {
+    User: models.User,
+    Reservation: reservationModels.Reservation,
+    AuditLog: models.AuditLog,
+  });
+  const settingsService = new SettingsService(violationModels);
+  const violationService = new ViolationService(violationModels, settingsService, {
+    logger: dependencies.logger,
+  });
+
   const reservationService = new ReservationService(reservationModels, {
     logger: dependencies.logger,
+    policy: violationService,
   });
   const checkInService = new CheckInService(reservationModels, {
     secret: dependencies.auth.checkInSigningSecret,
@@ -82,12 +97,13 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
     reservationModels,
     dependencies.auth.checkInSigningSecret,
   );
-  const reservationJob = new ReservationStateJob(reservationModels, new NoopViolationPort(), {
+  const reservationJob = new ReservationStateJob(reservationModels, violationService, {
     logger: dependencies.logger,
   });
 
   const reservationController = createReservationController(reservationService);
   const checkInController = createCheckInController(checkInService, checkInCodeService);
+  const violationController = createViolationController(violationService);
   const authenticateUser = authenticate(sessions);
   const requireAdmin = requireRole('admin', 'super_admin');
   const adminRoomDependencies = {
@@ -126,6 +142,13 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
     createAdminReservationRouter({
       reservations: reservationController,
       checkIns: checkInController,
+      authenticate: authenticateUser,
+      requireAdmin,
+    }),
+  );
+  router.use(
+    createViolationRouter({
+      controller: violationController,
       authenticate: authenticateUser,
       requireAdmin,
     }),

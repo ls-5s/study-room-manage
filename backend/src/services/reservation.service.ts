@@ -12,6 +12,10 @@ import { HttpError } from '../middleware/errors.js';
 import type { Logger } from '../lib/logger.js';
 import { toBusinessIso, buildSlotWindow } from '../lib/reservation-time.js';
 import { validateBookableDate } from '../lib/study-room-time.js';
+import {
+  AllowAllReservationPolicy,
+  type ReservationPolicyPort,
+} from './reservation-policy.port.js';
 
 export const DAILY_RESERVATION_LIMIT = 2;
 
@@ -94,6 +98,7 @@ export interface PagedResult<T> {
 interface ServiceOptions {
   now?: (() => Date) | undefined;
   logger?: Logger | undefined;
+  policy?: ReservationPolicyPort | undefined;
 }
 
 function fieldError(field: string, message: string): HttpError {
@@ -144,6 +149,7 @@ function windowRangeOverlaps(startAt: Date, endAt: Date) {
 export class ReservationService {
   private readonly now: () => Date;
   private readonly logger: Logger | undefined;
+  private readonly policy: ReservationPolicyPort;
 
   constructor(
     private readonly models: ReservationModels,
@@ -151,6 +157,7 @@ export class ReservationService {
   ) {
     this.now = options.now ?? (() => new Date());
     this.logger = options.logger;
+    this.policy = options.policy ?? new AllowAllReservationPolicy();
   }
 
   private toSummary(reservation: ReservationModel): ReservationSummaryView {
@@ -224,11 +231,8 @@ export class ReservationService {
         });
         if (!user) throw new HttpError(401, 'UNAUTHORIZED', '请先登录');
         if (user.status !== 'active') throw forbidden('账号已停用，请联系管理员');
-        if (user.restriction_until && user.restriction_until.getTime() > now.getTime()) {
-          throw forbidden(
-            `当前账号处于预约限制期，截止至 ${toBusinessIso(user.restriction_until)}`,
-          );
-        }
+        // The restriction rule lives in the violation module; M03 only calls the port.
+        this.policy.assertCanReserve(user, now);
 
         const sameDayCount = await this.models.Reservation.count({
           where: {
