@@ -18,6 +18,10 @@ export function installAuthGuards(router: Router) {
       return { name: 'forbidden' }
     }
 
+    if (to.meta.access === 'student' && auth.currentUser?.role !== 'student') {
+      return { name: 'forbidden' }
+    }
+
     if ((to.name === 'login' || to.name === 'register') && auth.currentUser) {
       return auth.homePath
     }
