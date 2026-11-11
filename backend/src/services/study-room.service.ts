@@ -3,6 +3,7 @@ import {
   assertTimeRange,
   formatSeatNumber,
   isValidSeatPrefix,
+  MAX_BOOKING_DAYS,
   nextBusinessDate,
   normalizeSeatPrefix,
   normalizeTime,
@@ -10,10 +11,12 @@ import {
   validateBookableDate,
 } from '../lib/study-room-time.js';
 import { HttpError } from '../middleware/errors.js';
+import { currentRequestId } from '../lib/request-context.js';
 import type { RoomTimeSlot } from '../models/room-time-slot.model.js';
 import type { Seat, SeatStatus } from '../models/seat.model.js';
 import type { StudyRoomModels } from '../models/study-room-models.js';
 import type { StudyRoom, StudyRoomStatus } from '../models/study-room.model.js';
+import type { OperationalSettingsService } from './operational-settings.service.js';
 
 export type DynamicSeatStatus = SeatStatus | 'reserved';
 
@@ -240,6 +243,7 @@ export class StudyRoomService {
     private readonly models: StudyRoomModels,
     private readonly reservations: ReservationAvailabilityPort = new NoopReservationAvailability(),
     private readonly now: () => Date = () => new Date(),
+    private readonly settings: Pick<OperationalSettingsService, 'getAll'> | null = null,
   ) {}
 
   private publicRoomWhere(date: string, keyword?: string): WhereOptions {
@@ -257,9 +261,11 @@ export class StudyRoomService {
     return where as WhereOptions;
   }
 
-  private assertPublicDate(date: string): string {
+  private async assertPublicDate(date: string): Promise<string> {
     try {
-      return validateBookableDate(date, this.now()).date;
+      const advanceDays =
+        (await this.settings?.getAll())?.reservation.advanceDays ?? MAX_BOOKING_DAYS;
+      return validateBookableDate(date, this.now(), advanceDays).date;
     } catch (error) {
       throw fieldError('date', error instanceof Error ? error.message : '日期无效');
     }
@@ -311,7 +317,7 @@ export class StudyRoomService {
     }
 
     const today = toBusinessDate(this.now());
-    const date = hasAllTimeFilters ? this.assertPublicDate(filter.date!) : today;
+    const date = hasAllTimeFilters ? await this.assertPublicDate(filter.date!) : today;
     const startTime = filter.startTime ? normalizeTime(filter.startTime) : undefined;
     const endTime = filter.endTime ? normalizeTime(filter.endTime) : undefined;
     if (startTime && endTime) {
@@ -378,7 +384,7 @@ export class StudyRoomService {
   }
 
   async getPublicRoom(roomId: string, requestedDate?: string) {
-    const date = this.assertPublicDate(requestedDate ?? toBusinessDate(this.now()));
+    const date = await this.assertPublicDate(requestedDate ?? toBusinessDate(this.now()));
     const room = await this.models.StudyRoom.findOne({
       where: { id: roomId, ...this.publicRoomWhere(date) },
     });
@@ -405,7 +411,7 @@ export class StudyRoomService {
   }
 
   async getPublicSeats(roomId: string, requestedDate: string, slotId: string) {
-    const date = this.assertPublicDate(requestedDate);
+    const date = await this.assertPublicDate(requestedDate);
     const room = await this.models.StudyRoom.findOne({
       where: { id: roomId, ...this.publicRoomWhere(date) },
     });
@@ -540,7 +546,7 @@ export class StudyRoomService {
             before_json: null,
             after_json: { name, location, gridRows, gridColumns, status: 'closed' },
             reason: '创建自习室',
-            request_id: null,
+            request_id: currentRequestId(),
             created_at: this.now(),
           },
           { transaction },
@@ -616,7 +622,7 @@ export class StudyRoomService {
         before_json: { status: 'open' },
         after_json: { status: 'closed' },
         reason,
-        request_id: null,
+        request_id: currentRequestId(),
         created_at: this.now(),
       },
       { transaction },
@@ -715,7 +721,7 @@ export class StudyRoomService {
             status: room.status,
           },
           reason: '修改自习室',
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: this.now(),
         },
         { transaction },
@@ -779,7 +785,7 @@ export class StudyRoomService {
               status: slot.status,
             },
             reason: '新增开放时段',
-            request_id: null,
+            request_id: currentRequestId(),
             created_at: this.now(),
           },
           { transaction },
@@ -877,7 +883,7 @@ export class StudyRoomService {
             status: slot.status,
           },
           reason: '修改开放时段',
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: this.now(),
         },
         { transaction },
@@ -968,7 +974,7 @@ export class StudyRoomService {
               skip: [...skipKeys],
             },
             reason: '批量新增座位',
-            request_id: null,
+            request_id: currentRequestId(),
             created_at: this.now(),
           },
           { transaction },
@@ -1063,7 +1069,7 @@ export class StudyRoomService {
             remark: seat.remark,
           },
           reason: '修改座位',
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: this.now(),
         },
         { transaction },

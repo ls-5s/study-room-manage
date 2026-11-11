@@ -6,6 +6,7 @@ import type { User } from '../models/user.model.js';
 import type { Violation, ViolationStatus, ViolationType } from '../models/violation.model.js';
 import type { ViolationModels } from '../models/violation-models.js';
 import type { Logger } from '../lib/logger.js';
+import { currentRequestId } from '../lib/request-context.js';
 import type { SettingsService } from './settings.service.js';
 
 export const VIOLATION_THRESHOLD_KEY = 'violation.threshold';
@@ -202,7 +203,7 @@ export class ViolationService {
           before_json: null,
           after_json: { threshold: rules.threshold, restrictionDays: rules.restrictionDays },
           reason: '更新违约规则',
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: this.now(),
         },
         { transaction },
@@ -355,7 +356,7 @@ export class ViolationService {
           before_json: { status: 'active' },
           after_json: { status: 'revoked', reason },
           reason,
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: now,
         },
         { transaction },

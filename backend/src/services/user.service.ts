@@ -13,6 +13,7 @@ import {
 } from '../lib/auth-normalization.js';
 import { assertValidPassword, hashPassword } from '../lib/password.js';
 import { HttpError } from '../middleware/errors.js';
+import { currentRequestId } from '../lib/request-context.js';
 import type { AuthenticationModels } from '../models/index.js';
 import type { UserStatus } from '../models/user.model.js';
 import type { User } from '../models/user.model.js';
@@ -260,7 +261,7 @@ export class UserService {
               studentNo: created.student_no,
             },
             reason: '超级管理员创建管理员账号',
-            request_id: null,
+            request_id: currentRequestId(),
             created_at: new Date(),
           },
           { transaction },
@@ -328,7 +329,7 @@ export class UserService {
           before_json: { status: previousStatus },
           after_json: { status },
           reason,
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: new Date(),
         },
         { transaction },

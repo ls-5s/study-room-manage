@@ -11,6 +11,7 @@ export type ErrorCode =
 
 export interface ErrorDetails {
   fields?: Record<string, string>;
+  requestId?: string;
 }
 
 export type ApiResponse<T> =

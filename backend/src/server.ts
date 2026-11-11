@@ -4,29 +4,32 @@ import { createDatabase } from './config/database.js';
 import { createLogger } from './lib/logger.js';
 import type { ServerJob } from './types/jobs.js';
 
-const logger = createLogger();
+let logger = createLogger();
 // Longest time to wait for in-flight requests and the database pool to settle on shutdown.
 const SHUTDOWN_TIMEOUT_MS = 9_000;
 
 try {
   const config = loadRuntimeConfig();
+  logger = createLogger({ level: config.logLevel });
   const database = createDatabase(config.database);
   const app = createApp({
     database,
     auth: config.auth,
     corsOrigins: config.corsOrigins,
     logger,
+    nodeEnv: config.nodeEnv,
+    trustProxy: config.trustProxy,
+    jobsEnabled: config.jobsEnabled,
   });
 
   const server = app.listen(config.port, config.host);
-  const jobs = (app.locals.jobs as ServerJob[] | undefined) ?? [];
+  const jobs = config.jobsEnabled ? ((app.locals.jobs as ServerJob[] | undefined) ?? []) : [];
   let stopping = false;
 
   async function close(exitCode: number) {
     if (stopping) return;
     stopping = true;
     logger.info('server.stopping');
-    for (const job of jobs) job.stop();
 
     const forcedExit = setTimeout(() => {
       logger.error('server.shutdown_timeout');
@@ -35,6 +38,11 @@ try {
     forcedExit.unref();
 
     try {
+      const jobResults = await Promise.allSettled(jobs.map((job) => job.stop()));
+      const failedJobs = jobResults.filter((result) => result.status === 'rejected').length;
+      if (failedJobs > 0) {
+        logger.warn('server.jobs_stop_failed', { failedJobs });
+      }
       await new Promise<void>((resolve) => {
         server.close(() => resolve());
         server.closeIdleConnections();

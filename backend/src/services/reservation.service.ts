@@ -10,12 +10,14 @@ import type { CheckIn } from '../models/check-in.model.js';
 import type { ReservationStatusLog } from '../models/reservation-status-log.model.js';
 import { HttpError } from '../middleware/errors.js';
 import type { Logger } from '../lib/logger.js';
+import { currentRequestId } from '../lib/request-context.js';
 import { toBusinessIso, buildSlotWindow } from '../lib/reservation-time.js';
-import { validateBookableDate } from '../lib/study-room-time.js';
+import { MAX_BOOKING_DAYS, validateBookableDate } from '../lib/study-room-time.js';
 import {
   AllowAllReservationPolicy,
   type ReservationPolicyPort,
 } from './reservation-policy.port.js';
+import type { OperationalSettingsService } from './operational-settings.service.js';
 
 export const DAILY_RESERVATION_LIMIT = 2;
 
@@ -99,6 +101,7 @@ interface ServiceOptions {
   now?: (() => Date) | undefined;
   logger?: Logger | undefined;
   policy?: ReservationPolicyPort | undefined;
+  settings?: OperationalSettingsService | undefined;
 }
 
 function fieldError(field: string, message: string): HttpError {
@@ -150,6 +153,7 @@ export class ReservationService {
   private readonly now: () => Date;
   private readonly logger: Logger | undefined;
   private readonly policy: ReservationPolicyPort;
+  private readonly settings: OperationalSettingsService | undefined;
 
   constructor(
     private readonly models: ReservationModels,
@@ -158,6 +162,7 @@ export class ReservationService {
     this.now = options.now ?? (() => new Date());
     this.logger = options.logger;
     this.policy = options.policy ?? new AllowAllReservationPolicy();
+    this.settings = options.settings;
   }
 
   private toSummary(reservation: ReservationModel): ReservationSummaryView {
@@ -211,8 +216,11 @@ export class ReservationService {
       reserveDate: rawInput.reserveDate,
     };
     const now = this.now();
+    const operational = await this.settings?.getAll();
+    const advanceDays = operational?.reservation.advanceDays ?? MAX_BOOKING_DAYS;
+    const dailyLimit = operational?.reservation.dailyLimit ?? DAILY_RESERVATION_LIMIT;
     try {
-      validateBookableDate(input.reserveDate, now);
+      validateBookableDate(input.reserveDate, now, advanceDays);
     } catch (error) {
       throw fieldError('reserveDate', error instanceof Error ? error.message : '日期无效');
     }
@@ -242,8 +250,8 @@ export class ReservationService {
           },
           transaction,
         });
-        if (sameDayCount >= DAILY_RESERVATION_LIMIT) {
-          throw conflict(`今日有效预约已达到上限（${DAILY_RESERVATION_LIMIT} 条）`);
+        if (sameDayCount >= dailyLimit) {
+          throw conflict(`今日有效预约已达到上限（${dailyLimit} 条）`);
         }
 
         const room = await this.models.StudyRoom.findByPk(input.roomId, {
@@ -488,9 +496,7 @@ export class ReservationService {
       if (!reservation) throw new HttpError(404, 'NOT_FOUND', '预约不存在');
       if (reservation.status !== 'pending') {
         throw conflict(
-          reservation.status === 'checked_in'
-            ? '已签到预约不支持取消'
-            : '该预约当前状态不允许取消',
+          reservation.status === 'checked_in' ? '已签到预约不支持取消' : '该预约当前状态不允许取消',
         );
       }
       if (!admin && reservation.start_at.getTime() <= now.getTime()) {
@@ -531,7 +537,7 @@ export class ReservationService {
             before_json: { status: 'pending' },
             after_json: { status: 'cancelled', reason },
             reason,
-            request_id: null,
+            request_id: currentRequestId(),
             created_at: now,
           },
           { transaction },
@@ -546,8 +552,10 @@ export class ReservationService {
     if (filter.roomId) where.room_id = normalizeId(filter.roomId, 'roomId');
     if (filter.seatNo) where.seat_no_snapshot = filter.seatNo.trim();
     if (filter.status) where.status = filter.status;
-    if (filter.dateFrom) where.reserve_date = { ...(where.reserve_date as object), [Op.gte]: filter.dateFrom };
-    if (filter.dateTo) where.reserve_date = { ...(where.reserve_date as object), [Op.lte]: filter.dateTo };
+    if (filter.dateFrom)
+      where.reserve_date = { ...(where.reserve_date as object), [Op.gte]: filter.dateFrom };
+    if (filter.dateTo)
+      where.reserve_date = { ...(where.reserve_date as object), [Op.lte]: filter.dateTo };
 
     const or: unknown[] = [];
     if (filter.studentNo) or.push({ '$user.student_no$': filter.studentNo.trim() });
@@ -597,7 +605,10 @@ export class ReservationService {
     return new Map(rows.map((row) => [String(row.reservation_id), row]));
   }
 
-  private toAdminView(reservation: ReservationModel, checkIn: CheckIn | null): AdminReservationView {
+  private toAdminView(
+    reservation: ReservationModel,
+    checkIn: CheckIn | null,
+  ): AdminReservationView {
     const user = (reservation as unknown as { user?: Record<string, unknown> }).user;
     return {
       ...this.toSummary(reservation),

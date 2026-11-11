@@ -48,12 +48,16 @@ export function nextBusinessDate(now = new Date()): string {
 export function validateBookableDate(
   value: string,
   now = new Date(),
+  advanceDays = MAX_BOOKING_DAYS,
 ): { date: string; firstDate: string; lastDate: string } {
   if (!isValidBusinessDate(value)) {
     throw new Error('日期格式必须为 YYYY-MM-DD');
   }
   const firstDate = toBusinessDate(now);
-  const lastDate = addBusinessDays(firstDate, MAX_BOOKING_DAYS - 1);
+  if (!Number.isInteger(advanceDays) || advanceDays < 1 || advanceDays > 30) {
+    throw new Error('预约窗口必须为 1-30 天');
+  }
+  const lastDate = addBusinessDays(firstDate, advanceDays - 1);
   if (value < firstDate || value > lastDate) {
     throw new Error(`日期必须在 ${firstDate} 至 ${lastDate} 之间`);
   }

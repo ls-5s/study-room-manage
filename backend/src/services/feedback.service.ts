@@ -2,6 +2,7 @@ import { Op, col, fn, literal, type WhereOptions } from 'sequelize';
 import { combineBusinessDateTime } from '../lib/reservation-time.js';
 import { toBusinessIso } from '../lib/reservation-time.js';
 import type { Logger } from '../lib/logger.js';
+import { currentRequestId } from '../lib/request-context.js';
 import { HttpError } from '../middleware/errors.js';
 import type { FeedbackModels } from '../models/feedback-models.js';
 import type {
@@ -475,7 +476,7 @@ export class FeedbackService {
           before_json: { status: beforeStatus, type: ticket.type },
           after_json: { status: input.status, type: ticket.type },
           reason: null,
-          request_id: null,
+          request_id: currentRequestId(),
           created_at: now,
         },
         { transaction },

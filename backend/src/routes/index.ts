@@ -9,7 +9,8 @@ import { createCheckInController } from '../controllers/check-in.controller.js';
 import { createViolationController } from '../controllers/violation.controller.js';
 import { createFeedbackController } from '../controllers/feedback.controller.js';
 import { createStatisticsController } from '../controllers/statistics.controller.js';
-import { createUserRateLimiter } from '../lib/user-rate-limit.js';
+import { createSystemController } from '../controllers/system.controller.js';
+import { createDynamicUserRateLimiter } from '../lib/user-rate-limit.js';
 import type { Logger } from '../lib/logger.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/authorize.js';
@@ -35,6 +36,8 @@ import { ViolationService } from '../services/violation.service.js';
 import { FeedbackService } from '../services/feedback.service.js';
 import { StatisticsRepository } from '../services/statistics.repository.js';
 import { StatisticsService } from '../services/statistics.service.js';
+import { OperationalSettingsService } from '../services/operational-settings.service.js';
+import { SystemService } from '../services/system.service.js';
 import { createAdminRoomRouter } from './admin-room.routes.js';
 import { createAdminReservationRouter } from './admin-reservation.routes.js';
 import { createReservationRouter } from './reservation.routes.js';
@@ -44,14 +47,16 @@ import { createStatisticsRouter } from './statistics.routes.js';
 import { createStudyRoomRouter } from './study-room.routes.js';
 import { createAuthRouter } from './auth.routes.js';
 import { createSystemRouter } from './system.routes.js';
-import type { SystemRouteDependencies } from './system.routes.js';
 import { createUserRouter } from './user.routes.js';
 import type { ServerJob } from '../types/jobs.js';
 
-export interface ApiRouteDependencies extends SystemRouteDependencies {
+export interface ApiRouteDependencies {
   database: Database;
   auth: AuthConfig;
   logger?: Logger;
+  nodeEnv: 'development' | 'production' | 'test';
+  trustProxy: number;
+  jobsEnabled: boolean;
 }
 
 export interface ApiRouter {
@@ -82,16 +87,25 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
     User: models.User,
     AuditLog: models.AuditLog,
   });
-  const availability = new ReservationAvailabilityAdapter(reservationModels);
-  const studyRoomService = new StudyRoomService(studyRoomModels, availability);
-  const studyRoomController = createStudyRoomController(studyRoomService);
-
   const violationModels = createViolationModels(dependencies.database.sequelize, {
     User: models.User,
     Reservation: reservationModels.Reservation,
     AuditLog: models.AuditLog,
   });
   const settingsService = new SettingsService(violationModels);
+  const operationalSettings = new OperationalSettingsService({
+    Settings: settingsService,
+    AuditLog: models.AuditLog,
+  });
+  settingsService.onChange(() => operationalSettings.invalidate());
+  const availability = new ReservationAvailabilityAdapter(reservationModels);
+  const studyRoomService = new StudyRoomService(
+    studyRoomModels,
+    availability,
+    undefined,
+    operationalSettings,
+  );
+  const studyRoomController = createStudyRoomController(studyRoomService);
   const violationService = new ViolationService(violationModels, settingsService, {
     logger: dependencies.logger,
   });
@@ -116,6 +130,7 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
   const reservationService = new ReservationService(reservationModels, {
     logger: dependencies.logger,
     policy: violationService,
+    settings: operationalSettings,
   });
   const checkInService = new CheckInService(reservationModels, {
     secret: dependencies.auth.checkInSigningSecret,
@@ -131,22 +146,40 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
   const statisticsJob = new StatisticsJob(statisticsService, reservationJob, {
     logger: dependencies.logger,
   });
+  const jobs = [reservationJob, statisticsJob] as const;
+  const systemService = new SystemService(operationalSettings, {
+    nodeEnv: dependencies.nodeEnv,
+    trustProxy: dependencies.trustProxy,
+    jobsEnabled: dependencies.jobsEnabled,
+    jobs,
+    probeDatabase: dependencies.database.probe,
+  });
 
   const reservationController = createReservationController(reservationService);
   const checkInController = createCheckInController(checkInService, checkInCodeService);
   const violationController = createViolationController(violationService);
   const feedbackController = createFeedbackController(feedbackService);
   const statisticsController = createStatisticsController(statisticsService);
+  const systemController = createSystemController(systemService);
   const authenticateUser = authenticate(sessions);
   const requireStudent = requireRole('student');
   const requireAdmin = requireRole('admin', 'super_admin');
+  const requireSuperAdmin = requireRole('super_admin');
   const adminRoomDependencies = {
     controller: studyRoomController,
     authenticate: authenticateUser,
     requireAdmin,
   };
 
-  router.use(createSystemRouter(dependencies));
+  router.use(
+    createSystemRouter({
+      probeDatabase: dependencies.database.probe,
+      controller: systemController,
+      authenticate: authenticateUser,
+      requireAdmin,
+      requireSuperAdmin,
+    }),
+  );
   router.use(
     createAuthRouter({
       controller: createAuthController(authService, sessions),
@@ -158,7 +191,7 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
       controller: createUserController(userService, authService),
       authenticate: authenticateUser,
       requireAdmin,
-      requireSuperAdmin: requireRole('super_admin'),
+      requireSuperAdmin,
     }),
   );
   router.use(createStudyRoomRouter(studyRoomController));
@@ -168,8 +201,14 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
       reservations: reservationController,
       checkIns: checkInController,
       authenticate: authenticateUser,
-      createLimiter: createUserRateLimiter({ limit: 10, windowMs: 60_000 }),
-      cancelLimiter: createUserRateLimiter({ limit: 10, windowMs: 60_000 }),
+      createLimiter: createDynamicUserRateLimiter({
+        limit: async () => (await operationalSettings.getAll()).reservation.createPerMinute,
+        windowMs: 60_000,
+      }),
+      cancelLimiter: createDynamicUserRateLimiter({
+        limit: async () => (await operationalSettings.getAll()).reservation.cancelPerMinute,
+        windowMs: 60_000,
+      }),
     }),
   );
   router.use(
@@ -193,8 +232,14 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
       authenticate: authenticateUser,
       requireStudent,
       requireAdmin,
-      minuteLimiter: createUserRateLimiter({ limit: 3, windowMs: 60_000 }),
-      hourLimiter: createUserRateLimiter({ limit: 10, windowMs: 60 * 60_000 }),
+      minuteLimiter: createDynamicUserRateLimiter({
+        limit: async () => (await operationalSettings.getAll()).feedback.createPerMinute,
+        windowMs: 60_000,
+      }),
+      hourLimiter: createDynamicUserRateLimiter({
+        limit: async () => (await operationalSettings.getAll()).feedback.createPerHour,
+        windowMs: 60 * 60_000,
+      }),
     }),
   );
   router.use(
@@ -204,5 +249,5 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
       requireAdmin,
     }),
   );
-  return { router, jobs: [reservationJob, statisticsJob] };
+  return { router, jobs };
 }

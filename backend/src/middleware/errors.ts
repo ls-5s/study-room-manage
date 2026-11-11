@@ -17,7 +17,11 @@ export class HttpError extends Error {
 }
 
 export const notFound: RequestHandler = (_request, response) => {
-  response.status(404).json(failure('NOT_FOUND', '接口不存在'));
+  response.status(404).json(
+    failure('NOT_FOUND', '接口不存在', {
+      requestId: _request.requestId ?? '',
+    }),
+  );
 };
 
 export function errorHandler(logger: Logger): ErrorRequestHandler {
@@ -57,8 +61,15 @@ export function errorHandler(logger: Logger): ErrorRequestHandler {
       logger.error(code === 'DATABASE_UNAVAILABLE' ? 'database.unavailable' : 'request.failed', {
         statusCode,
         method: request.method,
+        path: request.path,
+        requestId: request.requestId ?? 'unknown',
+        errorName: error instanceof Error ? error.name : 'UnknownError',
       });
     }
+    details = {
+      ...(details ?? {}),
+      requestId: request.requestId ?? '',
+    };
     response.status(statusCode).json(failure(code, message, details));
   };
 }

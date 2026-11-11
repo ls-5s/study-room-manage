@@ -4,6 +4,7 @@ import { classifyDeadline } from '../lib/reservation-time.js';
 import { OUTAGE_CANCELLATION_REASON } from '../lib/reservation-status.js';
 import type { ReservationModels } from '../models/reservation-models.js';
 import type { ViolationPort } from '../services/violation.port.js';
+import type { JobRuntimeStatus } from '../types/jobs.js';
 
 export interface ReservationStateJobResult {
   scanned: number;
@@ -21,12 +22,19 @@ interface JobOptions {
 }
 
 export class ReservationStateJob {
+  readonly name = 'reservation-state';
   private readonly now: () => Date;
   private readonly batchSize: number;
   private readonly maxRounds: number;
   private readonly logger: Logger | undefined;
   private running = false;
   private timer: ReturnType<typeof setInterval> | undefined;
+  private activeRun: Promise<void> | undefined;
+  private lastStartedAt: Date | null = null;
+  private lastFinishedAt: Date | null = null;
+  private lastDurationMs: number | null = null;
+  private consecutiveFailures = 0;
+  private lastErrorName: string | null = null;
 
   constructor(
     private readonly models: ReservationModels,
@@ -209,24 +217,59 @@ export class ReservationStateJob {
 
   start(intervalMs = 60_000): void {
     if (this.timer) return;
-    const tick = async () => {
-      if (this.running) return;
-      this.running = true;
-      try {
-        await this.run();
-      } catch {
-        this.logger?.error('job.reservation_state_crashed');
-      } finally {
-        this.running = false;
-      }
-    };
-    void tick();
-    this.timer = setInterval(() => void tick(), intervalMs);
+    void this.schedule();
+    this.timer = setInterval(() => void this.schedule(), intervalMs);
     this.timer.unref();
   }
 
-  stop(): void {
+  async stop(): Promise<void> {
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
+    await this.activeRun;
+  }
+
+  getStatus(): JobRuntimeStatus {
+    return {
+      name: this.name,
+      state: this.running
+        ? 'running'
+        : this.lastErrorName
+          ? 'error'
+          : this.lastFinishedAt
+            ? 'success'
+            : 'idle',
+      lastStartedAt: this.lastStartedAt,
+      lastFinishedAt: this.lastFinishedAt,
+      lastDurationMs: this.lastDurationMs,
+      consecutiveFailures: this.consecutiveFailures,
+      lastErrorName: this.lastErrorName,
+    };
+  }
+
+  private schedule(): Promise<void> {
+    if (this.running) return this.activeRun ?? Promise.resolve();
+    this.running = true;
+    this.lastStartedAt = this.now();
+    const started = performance.now();
+    this.activeRun = this.run()
+      .then(() => {
+        this.consecutiveFailures = 0;
+        this.lastErrorName = null;
+      })
+      .catch((error: unknown) => {
+        this.consecutiveFailures += 1;
+        this.lastErrorName = error instanceof Error ? error.name : 'UnknownError';
+        this.logger?.error('job.reservation_state_crashed', {
+          requestId: 'background',
+          errorName: this.lastErrorName,
+        });
+      })
+      .finally(() => {
+        this.running = false;
+        this.lastFinishedAt = this.now();
+        this.lastDurationMs = Math.round(performance.now() - started);
+        this.activeRun = undefined;
+      });
+    return this.activeRun;
   }
 }

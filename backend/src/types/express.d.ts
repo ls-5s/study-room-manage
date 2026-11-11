@@ -5,6 +5,7 @@ declare global {
     interface Request {
       auth?: AuthContext;
       tokenPayload?: AccessTokenPayload;
+      requestId?: string;
     }
   }
 }

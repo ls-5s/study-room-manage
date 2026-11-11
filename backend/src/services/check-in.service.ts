@@ -3,6 +3,7 @@ import { HttpError } from '../middleware/errors.js';
 import type { Logger } from '../lib/logger.js';
 import { toBusinessIso } from '../lib/reservation-time.js';
 import { verifyCheckInPayload } from '../lib/check-in-token.js';
+import { currentRequestId } from '../lib/request-context.js';
 import type { ReservationModels } from '../models/reservation-models.js';
 import type { CheckInMethod } from '../models/check-in.model.js';
 import type { ReservationActor } from './reservation.service.js';
@@ -186,7 +187,7 @@ export class CheckInService {
             before_json: { status: 'pending' },
             after_json: { status: 'checked_in', method },
             reason: remark,
-            request_id: null,
+            request_id: currentRequestId(),
             created_at: now,
           },
           { transaction },

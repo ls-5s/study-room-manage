@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { isLogLevel, type LogLevel } from '../lib/logger.js';
 
 export interface DatabaseConfig {
   host: string;
@@ -20,6 +21,9 @@ export interface ServerConfig {
   corsOrigins: string[];
   database: DatabaseConfig;
   auth: AuthConfig;
+  logLevel: LogLevel;
+  trustProxy: number;
+  jobsEnabled: boolean;
 }
 
 export interface AuthConfig {
@@ -76,6 +80,14 @@ function origins(env: NodeJS.ProcessEnv): string[] {
     throw new ConfigurationError('CORS_ORIGINS');
   }
   return [...new Set(values)];
+}
+
+function booleanValue(env: NodeJS.ProcessEnv, key: string, fallback: boolean): boolean {
+  const raw = env[key]?.trim().toLowerCase();
+  if (raw === undefined || raw === '') return fallback;
+  if (raw === 'true' || raw === '1') return true;
+  if (raw === 'false' || raw === '0') return false;
+  throw new ConfigurationError(key);
 }
 
 function checkInSigningSecret(env: NodeJS.ProcessEnv, jwtSecret: string): string {
@@ -136,6 +148,9 @@ export function readConfig(env: NodeJS.ProcessEnv): ServerConfig {
     throw new ConfigurationError('NODE_ENV');
   }
 
+  const rawLogLevel = env.LOG_LEVEL?.trim().toLowerCase() ?? 'info';
+  if (!isLogLevel(rawLogLevel)) throw new ConfigurationError('LOG_LEVEL');
+
   return {
     host: hostname(env, 'HOST', '127.0.0.1'),
     port: integer(env, 'PORT', 43080),
@@ -143,6 +158,9 @@ export function readConfig(env: NodeJS.ProcessEnv): ServerConfig {
     corsOrigins: origins(env),
     database: readDatabaseConfig(env),
     auth: authConfig(env),
+    logLevel: rawLogLevel,
+    trustProxy: integer(env, 'TRUST_PROXY', 0, 10),
+    jobsEnabled: booleanValue(env, 'JOBS_ENABLED', true),
   };
 }
 

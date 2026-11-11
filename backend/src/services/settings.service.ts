@@ -10,6 +10,8 @@ export interface SettingsModels {
  * service only guarantees JSON round-tripping and that writes are attributable.
  */
 export class SettingsService {
+  private readonly changeListeners = new Set<() => void>();
+
   constructor(
     private readonly models: SettingsModels,
     private readonly now: () => Date = () => new Date(),
@@ -36,6 +38,7 @@ export class SettingsService {
         { value_json: value, updated_by: operatorId, updated_at: timestamp },
         options,
       );
+      this.notifyChange();
       return;
     }
     await this.models.SystemSetting.create(
@@ -48,5 +51,15 @@ export class SettingsService {
       },
       options,
     );
+    this.notifyChange();
+  }
+
+  onChange(listener: () => void): () => void {
+    this.changeListeners.add(listener);
+    return () => this.changeListeners.delete(listener);
+  }
+
+  private notifyChange(): void {
+    for (const listener of this.changeListeners) listener();
   }
 }
