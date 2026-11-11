@@ -50,7 +50,7 @@ export function createApp(dependencies: AppDependencies) {
   });
   app.use('/api/v1', api.router);
   // The HTTP server owns the lifecycle of background jobs; the app only exposes them.
-  app.locals.reservationJob = api.reservationJob;
+  app.locals.jobs = api.jobs;
 
   app.use(notFound);
   app.use(errorHandler(logger));

@@ -45,10 +45,12 @@ export class RequestError extends Error {
 declare module 'axios' {
   interface AxiosRequestConfig {
     skipAuth?: boolean
+    skipEnvelope?: boolean
   }
 
   interface InternalAxiosRequestConfig {
     skipAuth?: boolean
+    skipEnvelope?: boolean
   }
 }
 
@@ -64,8 +66,18 @@ function retryAfter(response: AxiosResponse<unknown>): number | null {
   return Number.isFinite(value) && value > 0 ? Math.ceil(value) : null
 }
 
-function httpFailure(response: AxiosResponse<unknown>): RequestError {
-  const body = response.data
+async function responseBody(value: unknown): Promise<unknown> {
+  if (!(value instanceof Blob)) return value
+  try {
+    const text = await value.text()
+    return JSON.parse(text) as unknown
+  } catch {
+    return value
+  }
+}
+
+async function httpFailure(response: AxiosResponse<unknown>): Promise<RequestError> {
+  const body = await responseBody(response.data)
   if (isEnvelope(body) && body.code !== 'OK') {
     const fields = body.data?.fields
     return new RequestError('business', {
@@ -79,7 +91,7 @@ function httpFailure(response: AxiosResponse<unknown>): RequestError {
   return new RequestError('http', { httpStatus: response.status })
 }
 
-function normalizeFailure(error: unknown): RequestError {
+async function normalizeFailure(error: unknown): Promise<RequestError> {
   if (error instanceof RequestError) return error
   if (axios.isCancel(error)) return new RequestError('cancel')
   if (!axios.isAxiosError(error)) return new RequestError('unknown')
@@ -109,6 +121,7 @@ request.interceptors.request.use((config) => {
 
 request.interceptors.response.use(
   (response: AxiosResponse<unknown>) => {
+    if (response.config.skipEnvelope) return response
     if (!isEnvelope(response.data)) {
       throw new RequestError('invalid-response', { httpStatus: response.status })
     }
@@ -124,8 +137,8 @@ request.interceptors.response.use(
     }
     return response
   },
-  (error: unknown) => {
-    const normalized = normalizeFailure(error)
+  async (error: unknown) => {
+    const normalized = await normalizeFailure(error)
     if (
       normalized.httpStatus === 401 &&
       axios.isAxiosError(error) &&

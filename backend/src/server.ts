@@ -2,7 +2,7 @@ import { createApp } from './app.js';
 import { ConfigurationError, loadRuntimeConfig } from './config/env.js';
 import { createDatabase } from './config/database.js';
 import { createLogger } from './lib/logger.js';
-import type { ReservationStateJob } from './jobs/reservation-state.job.js';
+import type { ServerJob } from './types/jobs.js';
 
 const logger = createLogger();
 // Longest time to wait for in-flight requests and the database pool to settle on shutdown.
@@ -19,14 +19,14 @@ try {
   });
 
   const server = app.listen(config.port, config.host);
-  const reservationJob = app.locals.reservationJob as ReservationStateJob | undefined;
+  const jobs = (app.locals.jobs as ServerJob[] | undefined) ?? [];
   let stopping = false;
 
   async function close(exitCode: number) {
     if (stopping) return;
     stopping = true;
     logger.info('server.stopping');
-    reservationJob?.stop();
+    for (const job of jobs) job.stop();
 
     const forcedExit = setTimeout(() => {
       logger.error('server.shutdown_timeout');
@@ -51,7 +51,7 @@ try {
 
   server.once('listening', () => {
     logger.info('server.started', { host: config.host, port: config.port });
-    reservationJob?.start();
+    for (const job of jobs) job.start();
     // Listening errors are handled above; a later error should go to the default handler
     // instead of silently shutting the server down.
     server.off('error', onListenError);

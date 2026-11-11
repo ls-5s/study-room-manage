@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import type { Logger } from '../lib/logger.js';
 import { classifyDeadline } from '../lib/reservation-time.js';
+import { OUTAGE_CANCELLATION_REASON } from '../lib/reservation-status.js';
 import type { ReservationModels } from '../models/reservation-models.js';
 import type { ViolationPort } from '../services/violation.port.js';
 
@@ -18,8 +19,6 @@ interface JobOptions {
   maxRounds?: number | undefined;
   logger?: Logger | undefined;
 }
-
-const OUTAGE_REASON = '签到服务中断期间到期，不计违约';
 
 export class ReservationStateJob {
   private readonly now: () => Date;
@@ -162,7 +161,7 @@ export class ReservationStateJob {
       const [affected] = await this.models.Reservation.update(
         {
           status: 'cancelled',
-          cancel_reason: OUTAGE_REASON,
+          cancel_reason: OUTAGE_CANCELLATION_REASON,
           cancelled_by: null,
           cancelled_at: now,
         },
@@ -176,7 +175,7 @@ export class ReservationStateJob {
           to_status: 'cancelled',
           actor_type: 'system',
           actor_id: null,
-          reason: OUTAGE_REASON,
+          reason: OUTAGE_CANCELLATION_REASON,
           occurred_at: now,
         },
         { transaction },
