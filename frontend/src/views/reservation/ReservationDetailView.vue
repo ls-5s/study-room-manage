@@ -68,7 +68,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="detail-page">
+  <section class="detail-page page-shell">
     <RouterLink class="back-link" to="/reservations">
       <el-icon><ArrowLeft /></el-icon>
       返回我的预约
@@ -82,8 +82,8 @@ onMounted(() => {
 
     <div v-loading="loading" class="detail-body">
       <template v-if="detail">
-        <header class="detail-header">
-          <div>
+        <header class="detail-header page-hero">
+          <div class="page-hero-copy">
             <p class="page-eyebrow">预约详情 · 编号 {{ detail.id }}</p>
             <h1>{{ detail.roomName }}</h1>
             <p class="header-meta">
@@ -91,7 +91,7 @@ onMounted(() => {
               {{ formatTimeRange(detail.startAt, detail.endAt) }} · 座位 {{ detail.seatNo }}
             </p>
           </div>
-          <div class="header-actions">
+          <div class="header-actions page-actions">
             <el-tag :type="reservationStatusTagType(detail.status)" effect="light">
               {{ reservationStatusLabels[detail.status] }}
             </el-tag>
@@ -113,7 +113,9 @@ onMounted(() => {
           </div>
           <div class="info-item">
             <span>签到时间</span>
-            <strong>{{ detail.checkIn ? formatDateTime(detail.checkIn.checkedInAt) : '尚未签到' }}</strong>
+            <strong>{{
+              detail.checkIn ? formatDateTime(detail.checkIn.checkedInAt) : '尚未签到'
+            }}</strong>
           </div>
           <div class="info-item">
             <span>签到方式</span>
@@ -145,18 +147,16 @@ onMounted(() => {
           show-icon
         />
 
-        <CheckInPanel
-          v-if="detail.status === 'pending'"
-          :reservation="detail"
-          @checked-in="load"
-        />
+        <CheckInPanel v-if="detail.status === 'pending'" :reservation="detail" @checked-in="load" />
 
         <section v-if="detail.status === 'pending'" class="cancel-bar">
           <div>
             <strong>需要取消？</strong>
             <span>预约开始前可以自行取消，取消后座位立即释放。</span>
           </div>
-          <el-button type="danger" plain :disabled="!cancellable" @click="cancel">取消预约</el-button>
+          <el-button type="danger" plain :disabled="!cancellable" @click="cancel"
+            >取消预约</el-button
+          >
         </section>
 
         <section class="timeline-section">
@@ -171,7 +171,7 @@ onMounted(() => {
 <style scoped>
 .detail-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .back-link {
@@ -191,34 +191,30 @@ onMounted(() => {
 }
 
 .detail-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px 24px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 210px;
 }
 
 .page-eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
 .detail-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .header-meta {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .header-actions {
@@ -236,20 +232,21 @@ onMounted(() => {
 .info-item {
   display: grid;
   gap: 6px;
-  padding: 14px 16px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .info-item span {
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .info-item strong {
   color: var(--text);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .cancel-bar {
@@ -259,7 +256,7 @@ onMounted(() => {
   gap: 16px;
   padding: 16px 18px;
   border: 1px dashed var(--border-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .cancel-bar div {
@@ -269,25 +266,26 @@ onMounted(() => {
 
 .cancel-bar strong {
   color: var(--text);
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 
 .cancel-bar span {
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .timeline-section {
-  padding: 18px 20px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .timeline-section h2 {
   margin: 0 0 12px;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 @media (max-width: 720px) {

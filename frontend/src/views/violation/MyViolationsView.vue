@@ -76,9 +76,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="violation-page">
-    <header class="page-header">
-      <div>
+  <section class="violation-page page-shell">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">学生服务 / 违约</p>
         <h1>我的违约</h1>
         <p class="page-note">预约未在签到窗口内完成签到会记为一次失约，累计到阈值后限制预约。</p>
@@ -115,7 +115,7 @@ onMounted(() => {
       show-icon
     />
 
-    <el-form class="filter-panel" @submit.prevent="changeFilter">
+    <el-form class="filter-panel toolbar-panel" @submit.prevent="changeFilter">
       <el-form-item label="状态">
         <el-radio-group v-model="filters.status" @change="changeFilter">
           <el-radio-button value="">全部</el-radio-button>
@@ -136,7 +136,7 @@ onMounted(() => {
       </template>
     </el-alert>
 
-    <el-table v-loading="loading" :data="items" border stripe>
+    <el-table v-loading="loading" :data="items">
       <el-table-column label="发生时间" width="170">
         <template #default="{ row }">{{ formatDateTime(row.occurredAt) }}</template>
       </el-table-column>
@@ -187,34 +187,34 @@ onMounted(() => {
 <style scoped>
 .violation-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-note {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .summary-grid {
@@ -226,25 +226,26 @@ onMounted(() => {
 .summary-card {
   display: grid;
   gap: 4px;
-  padding: 16px 18px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .summary-card span {
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .summary-card strong {
   color: var(--text);
-  font-size: 1.5rem;
+  font-size: 2rem;
+  font-weight: 500;
 }
 
 .summary-card small {
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
 }
 
 .summary-card.danger {
@@ -262,8 +263,8 @@ onMounted(() => {
   gap: 4px 16px;
   padding: 14px 16px 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .cell-stack {
@@ -273,12 +274,13 @@ onMounted(() => {
 
 .cell-stack strong {
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .cell-stack small {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .muted {

@@ -211,9 +211,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="system-page" aria-labelledby="system-title">
-    <header class="system-hero">
-      <div>
+  <section class="system-page page-shell" aria-labelledby="system-title">
+    <header class="system-hero page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 系统运维</p>
         <h1 id="system-title">系统运维中心</h1>
         <p>检查服务与数据库状态，查看后台任务，并集中维护全局业务参数。</p>
@@ -300,7 +300,7 @@ onBeforeUnmount(() => {
           {{ status.service.jobsEnabled ? '调度已启用' : '调度已停用' }}
         </el-tag>
       </header>
-      <el-table :data="status.jobs" border stripe>
+      <el-table :data="status.jobs">
         <el-table-column label="任务" min-width="170">
           <template #default="{ row }">{{ jobLabel(row.name) }}</template>
         </el-table-column>
@@ -464,25 +464,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .system-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .system-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 26px 28px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    radial-gradient(
-      circle at 88% 8%,
-      color-mix(in srgb, var(--accent) 18%, transparent),
-      transparent 30%
-    ),
-    linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 210px;
 }
 
 .page-eyebrow,
@@ -490,38 +476,33 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--accent);
   font-size: 0.7rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .system-hero h1 {
   margin: 8px 0 0;
-  color: var(--text);
-  font-size: clamp(1.7rem, 2.8vw, 2.4rem);
-  letter-spacing: -0.045em;
 }
 
 .system-hero p:last-child {
   max-width: 700px;
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.7;
+  margin: 12px 0 0;
 }
 
 .status-card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
   min-height: 115px;
 }
 
 .status-card {
   display: flex;
   gap: 12px;
-  padding: 16px 18px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .status-icon {
@@ -530,7 +511,7 @@ onBeforeUnmount(() => {
   height: 34px;
   flex-shrink: 0;
   place-items: center;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .status-success .status-icon {
@@ -567,22 +548,22 @@ onBeforeUnmount(() => {
 .status-card span,
 .status-card small {
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .status-card strong {
   color: var(--text);
-  font-size: 1.22rem;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 .surface {
   display: grid;
-  gap: 15px;
-  padding: 19px;
+  gap: 16px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .surface-heading {
@@ -595,7 +576,8 @@ onBeforeUnmount(() => {
 .surface-heading h2 {
   margin: 4px 0 0;
   color: var(--text);
-  font-size: 1.02rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .environment-pill {
@@ -603,8 +585,8 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   color: var(--accent);
   background: var(--accent-soft);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .runtime-grid {
@@ -617,13 +599,13 @@ onBeforeUnmount(() => {
 .runtime-grid dt {
   margin-bottom: 4px;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .runtime-grid dd {
   margin: 0;
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
 
@@ -646,7 +628,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
 }
 
 .settings-form fieldset:disabled {
@@ -656,8 +638,8 @@ onBeforeUnmount(() => {
 .settings-form legend {
   padding: 0 6px;
   color: var(--text);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .settings-grid {
@@ -670,27 +652,27 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 5px;
   color: var(--text-secondary);
-  font-size: 0.74rem;
+  font-size: 0.875rem;
 }
 
 .settings-grid input {
   width: 100%;
-  height: 34px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--surface);
 }
 
 .settings-grid small {
   color: var(--text-muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
 }
 
 .settings-grid em {
   color: var(--status-bad);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-style: normal;
 }
 
@@ -704,7 +686,7 @@ onBeforeUnmount(() => {
 .settings-footer p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 1080px) {
@@ -722,7 +704,7 @@ onBeforeUnmount(() => {
   .system-hero {
     align-items: flex-start;
     flex-direction: column;
-    padding: 21px;
+    padding: 24px;
   }
 
   .status-card-grid,
@@ -736,7 +718,7 @@ onBeforeUnmount(() => {
   }
 
   .surface {
-    padding: 15px;
+    padding: 16px;
   }
 
   .settings-footer {

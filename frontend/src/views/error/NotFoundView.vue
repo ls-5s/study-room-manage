@@ -33,9 +33,10 @@ const router = useRouter()
   min-height: 60svh;
   place-items: center;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(24px);
 }
 
 .not-found :deep(.el-result) {

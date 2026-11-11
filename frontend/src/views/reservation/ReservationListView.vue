@@ -89,9 +89,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="reservation-page">
-    <header class="page-header">
-      <div>
+  <section class="reservation-page page-shell">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">学生服务 / 预约</p>
         <h1>我的预约</h1>
         <p class="page-note">查看预约状态与签到窗口，预约开始前可以自行取消。</p>
@@ -99,7 +99,7 @@ onMounted(() => {
       <el-button :icon="RefreshRight" :loading="loading" @click="load">刷新</el-button>
     </header>
 
-    <el-form class="filter-panel" @submit.prevent="reloadFromFirstPage">
+    <el-form class="filter-panel toolbar-panel" @submit.prevent="reloadFromFirstPage">
       <el-form-item label="状态">
         <el-radio-group v-model="filters.status">
           <el-radio-button value="">全部</el-radio-button>
@@ -158,34 +158,34 @@ onMounted(() => {
 <style scoped>
 .reservation-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-note {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .filter-panel {
@@ -194,8 +194,8 @@ onMounted(() => {
   gap: 8px 20px;
   padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .list-body {
@@ -205,6 +205,6 @@ onMounted(() => {
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 14px;
+  gap: 20px;
 }
 </style>

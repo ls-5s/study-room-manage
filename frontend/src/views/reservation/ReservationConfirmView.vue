@@ -89,7 +89,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="confirm-page">
+  <section class="confirm-page page-shell">
     <RouterLink class="back-link" to="/home">
       <el-icon><ArrowLeft /></el-icon>
       返回自习室列表
@@ -127,13 +127,13 @@ onMounted(() => {
       </template>
 
       <template v-else>
-        <header class="confirm-header">
-          <div>
+        <header class="confirm-header page-hero">
+          <div class="page-hero-copy">
             <p class="page-eyebrow">学生服务 / 预约</p>
             <h1>确认预约信息</h1>
             <p class="header-note">提交后座位将为你保留，请在签到窗口内到场签到。</p>
           </div>
-          <div v-if="room" class="header-room">
+          <div v-if="room" class="header-room page-actions">
             <span>{{ room.name }}</span>
             <small>{{ room.location }}</small>
           </div>
@@ -158,13 +158,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <el-alert
-          v-if="submitError"
-          type="error"
-          :title="submitError"
-          :closable="false"
-          show-icon
-        >
+        <el-alert v-if="submitError" type="error" :title="submitError" :closable="false" show-icon>
           <template v-if="conflict" #default>
             <el-button link type="primary" @click="load">刷新座位状态</el-button>
             <el-button link type="primary" @click="router.push(`/study-rooms/${roomId}`)">
@@ -219,34 +213,30 @@ onMounted(() => {
 }
 
 .confirm-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 24px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 210px;
 }
 
 .confirm-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .header-note {
-  margin: 10px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .header-room {
@@ -273,10 +263,10 @@ onMounted(() => {
 .summary-item {
   display: grid;
   gap: 6px;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .summary-item span {
@@ -286,19 +276,21 @@ onMounted(() => {
 
 .summary-item strong {
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .rules {
-  padding: 18px 20px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .rules h2 {
   margin: 0 0 10px;
-  font-size: 0.95rem;
+  font-size: 1.125rem;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -308,7 +300,7 @@ onMounted(() => {
   margin: 0;
   padding-left: 18px;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 
 .confirm-actions {

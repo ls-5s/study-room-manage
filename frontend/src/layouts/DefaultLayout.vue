@@ -46,10 +46,15 @@ watch(
 
 <template>
   <div class="app-shell">
+    <div class="workspace-atmosphere" aria-hidden="true">
+      <span class="atmosphere-light atmosphere-light-primary" />
+      <span class="atmosphere-light atmosphere-light-secondary" />
+      <span class="atmosphere-grid" />
+    </div>
     <a class="skip-link" href="#main-content">跳到主要内容</a>
 
     <el-container class="layout-container">
-      <el-aside class="desktop-sidebar" width="232px">
+      <el-aside class="desktop-sidebar" width="248px">
         <div class="sidebar-content">
           <RouterLink class="brand" to="/home" aria-label="校园自习室，返回自习室首页">
             <span class="brand-mark" aria-hidden="true">
@@ -74,7 +79,7 @@ watch(
       </el-aside>
 
       <el-container class="workspace">
-        <el-header class="topbar" height="64px">
+        <el-header class="topbar" height="72px">
           <div class="topbar-leading">
             <el-button
               class="mobile-menu-button"
@@ -113,7 +118,11 @@ watch(
         </el-header>
 
         <el-main id="main-content" class="main-content" tabindex="-1">
-          <RouterView />
+          <RouterView v-slot="{ Component }">
+            <Transition name="page-shift" mode="out-in">
+              <component :is="Component" :key="route.fullPath" />
+            </Transition>
+          </RouterView>
         </el-main>
 
         <footer class="site-footer">
@@ -157,8 +166,56 @@ watch(
 
 <style scoped>
 .app-shell {
+  position: relative;
+  min-width: 0;
   min-height: 100svh;
-  background: var(--canvas);
+  overflow: clip;
+  background:
+    radial-gradient(ellipse at 34% -8%, var(--gradient-accent), transparent 38%),
+    radial-gradient(ellipse at 96% 68%, var(--gradient-secondary), transparent 42%), var(--canvas);
+  isolation: isolate;
+}
+
+.workspace-atmosphere {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.atmosphere-light {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 1;
+}
+
+.atmosphere-light-primary {
+  top: -220px;
+  left: 16%;
+  width: 760px;
+  height: 620px;
+  background: radial-gradient(circle, var(--gradient-accent), transparent 68%);
+}
+
+.atmosphere-light-secondary {
+  right: -220px;
+  bottom: 5%;
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(circle, var(--gradient-secondary), transparent 70%);
+}
+
+.atmosphere-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.16;
+  mask-image: linear-gradient(to bottom, #000, transparent 62%);
 }
 
 .layout-container {
@@ -193,7 +250,14 @@ watch(
   overflow-x: hidden;
   overflow-y: auto;
   border-right: 1px solid var(--sidebar-border);
-  background: var(--sidebar-surface);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sidebar-surface) 90%, var(--accent)),
+      transparent 42%
+    ),
+    var(--sidebar-surface);
+  backdrop-filter: blur(24px) saturate(118%);
   scrollbar-color: rgb(255 255 255 / 20%) transparent;
   scrollbar-width: thin;
 }
@@ -210,8 +274,8 @@ watch(
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 32px;
-  padding: 0 8px;
+  margin-bottom: 40px;
+  padding: 4px 8px;
   color: var(--text);
   text-decoration: none;
 }
@@ -222,10 +286,13 @@ watch(
   height: 40px;
   flex-shrink: 0;
   place-items: center;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  color: var(--accent-contrast);
-  background: var(--accent);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--action-text);
+  background: var(--action);
+  box-shadow:
+    inset 0 1px rgb(255 255 255 / 12%),
+    0 8px 20px rgb(0 0 0 / 12%);
   font-size: 20px;
 }
 
@@ -237,9 +304,9 @@ watch(
 }
 
 .brand-text strong {
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .brand-text small {
@@ -286,7 +353,7 @@ watch(
 
 .workspace {
   min-width: 0;
-  background: var(--canvas);
+  background: transparent;
 }
 
 .topbar {
@@ -297,10 +364,10 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 40px;
+  padding: 0 clamp(20px, 2.4vw, 40px);
   border-bottom: 1px solid var(--border);
   background: var(--topbar-surface);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(24px) saturate(118%);
 }
 
 .topbar-leading,
@@ -320,7 +387,7 @@ watch(
   max-width: 140px;
   overflow: hidden;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -364,9 +431,10 @@ watch(
 
 .main-content {
   width: 100%;
-  max-width: none;
+  max-width: 1480px;
   flex: 1;
-  padding: 36px clamp(20px, 2.5vw, 40px) 48px;
+  align-self: center;
+  padding: 32px clamp(20px, 2.4vw, 40px) 48px;
   overflow: visible;
 }
 
@@ -379,10 +447,30 @@ watch(
   width: 100%;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px clamp(20px, 2.5vw, 40px);
+  width: 100%;
+  max-width: 1480px;
+  align-self: center;
+  padding: 24px clamp(20px, 2.4vw, 40px);
   color: var(--text-muted);
   font-size: 0.75rem;
   line-height: 1rem;
+}
+
+.page-shift-enter-active,
+.page-shift-leave-active {
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 360ms var(--ease-out);
+}
+
+.page-shift-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-shift-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 @media (max-width: 1100px) {
@@ -445,12 +533,24 @@ watch(
   .skip-link {
     transition: none;
   }
+
+  .page-shift-enter-active,
+  .page-shift-leave-active {
+    transition: opacity 1ms;
+  }
+
+  .page-shift-enter-from,
+  .page-shift-leave-to {
+    transform: none;
+  }
 }
 </style>
 
 <style>
 .mobile-navigation-drawer {
-  background: var(--surface);
+  border-right: 1px solid var(--border-strong);
+  background: var(--surface-glass);
+  backdrop-filter: blur(28px) saturate(120%);
 }
 
 .mobile-navigation-drawer .el-drawer__body {

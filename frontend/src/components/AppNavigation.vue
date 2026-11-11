@@ -128,26 +128,30 @@ const navigationGroups = computed<readonly NavigationGroup[]>(() => {
 }
 
 .navigation-menu :deep(.el-menu-item) {
-  min-height: 44px;
+  min-height: 40px;
   margin-bottom: 4px;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 8px;
   font-size: 0.875rem;
   line-height: 1.25rem;
+  transition:
+    color 300ms var(--ease-out),
+    background-color 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
 }
 
 .navigation-menu :deep(.el-menu-item.is-active) {
   background: var(--sidebar-surface-selected);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .navigation-menu :deep(.el-menu-item.is-active)::before {
   position: absolute;
   top: 50%;
   left: 0;
-  width: 3px;
-  height: 20px;
-  border-radius: 2px;
+  width: 2px;
+  height: 16px;
+  border-radius: 999px;
   background: var(--accent);
   content: '';
   transform: translateY(-50%);
@@ -157,12 +161,22 @@ const navigationGroups = computed<readonly NavigationGroup[]>(() => {
   color: var(--sidebar-text-strong);
 }
 
+.navigation-menu :deep(.el-menu-item:active) {
+  transform: scale(0.985);
+}
+
+.navigation-menu :deep(.el-menu-item .el-icon) {
+  width: 18px;
+  margin-right: 10px;
+  font-size: 17px;
+}
+
 .navigation-group-label {
-  margin: 20px 16px 8px;
+  margin: 24px 14px 8px;
   color: var(--sidebar-text-muted);
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   line-height: 1rem;
   list-style: none;
 }

@@ -5,9 +5,7 @@ import { useThemeStore } from '../stores/theme'
 
 const themeStore = useThemeStore()
 
-const actionLabel = computed(() =>
-  themeStore.isDark ? '切换到浅色主题' : '切换到深色主题',
-)
+const actionLabel = computed(() => (themeStore.isDark ? '切换到浅色主题' : '切换到深色主题'))
 </script>
 
 <template>
@@ -34,21 +32,26 @@ const actionLabel = computed(() =>
   flex-shrink: 0;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 50%;
   color: var(--text-secondary);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
   cursor: pointer;
   transition:
-    color 160ms ease,
-    border-color 160ms ease,
-    background-color 160ms ease;
+    color 300ms var(--ease-out),
+    border-color 300ms var(--ease-out),
+    background-color 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
 }
 
 .theme-toggle:hover {
   color: var(--accent);
-  border-color: var(--border-strong);
-  background: var(--surface-muted);
+  border-color: var(--control-border);
+  background: var(--surface-raised);
+}
+
+.theme-toggle:active {
+  transform: scale(0.96);
 }
 
 .theme-toggle:focus-visible {

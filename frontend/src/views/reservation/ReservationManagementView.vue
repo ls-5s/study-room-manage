@@ -7,7 +7,11 @@ import { getAdminStudyRooms } from '../../api/admin-room'
 import { manualCheckIn } from '../../api/check-in'
 import { cancelReservation, getReservation, listAdminReservations } from '../../api/reservation'
 import ReservationTimeline from '../../components/reservation/ReservationTimeline.vue'
-import type { AdminReservation, ReservationDetail, ReservationStatus } from '../../types/reservation'
+import type {
+  AdminReservation,
+  ReservationDetail,
+  ReservationStatus,
+} from '../../types/reservation'
 import type { StudyRoomSummary } from '../../types/study-room'
 import { RequestError } from '../../utils/request'
 import {
@@ -154,22 +158,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="admin-reservation-page">
-    <header class="page-header">
-      <div>
+  <section class="admin-reservation-page page-shell">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 预约</p>
         <h1>预约管理</h1>
         <p class="page-note">按学生、自习室、日期和状态查询预约，异常情况可人工取消或核验签到。</p>
       </div>
-      <div class="header-actions">
+      <div class="header-actions page-actions">
         <el-button @click="router.push('/admin/reservations/check-in-code')">签到码展示</el-button>
         <el-button :icon="RefreshRight" :loading="loading" @click="load">刷新</el-button>
       </div>
     </header>
 
-    <el-form class="filter-panel" @submit.prevent="search">
+    <el-form class="filter-panel toolbar-panel" @submit.prevent="search">
       <el-form-item label="学号">
-        <el-input v-model="filters.studentNo" placeholder="精确学号" clearable style="width: 160px" />
+        <el-input
+          v-model="filters.studentNo"
+          placeholder="精确学号"
+          clearable
+          style="width: 160px"
+        />
       </el-form-item>
       <el-form-item label="自习室">
         <!-- Native select keeps the filter typed; Element's ElSelect props do not resolve
@@ -208,7 +217,7 @@ onMounted(() => {
 
     <el-alert v-if="error" type="error" :title="error" :closable="false" show-icon />
 
-    <el-table v-loading="loading" :data="items" border stripe>
+    <el-table v-loading="loading" :data="items">
       <el-table-column label="学生" min-width="150">
         <template #default="{ row }">
           <div class="student-cell">
@@ -249,12 +258,7 @@ onMounted(() => {
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openDetail(row.id)">详情</el-button>
-          <el-button
-            v-if="row.status === 'pending'"
-            link
-            type="success"
-            @click="verify(row)"
-          >
+          <el-button v-if="row.status === 'pending'" link type="success" @click="verify(row)">
             人工核验
           </el-button>
           <el-button v-if="row.status === 'pending'" link type="danger" @click="cancel(row)">
@@ -317,34 +321,34 @@ onMounted(() => {
 <style scoped>
 .admin-reservation-page {
   display: grid;
-  gap: 14px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-note {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .header-actions {
@@ -358,19 +362,19 @@ onMounted(() => {
   gap: 4px 16px;
   padding: 14px 16px 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .native-select {
   min-width: 180px;
-  height: 32px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  background: var(--surface);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
 
 .student-cell {
@@ -380,12 +384,13 @@ onMounted(() => {
 
 .student-cell strong {
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .student-cell small {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .muted {

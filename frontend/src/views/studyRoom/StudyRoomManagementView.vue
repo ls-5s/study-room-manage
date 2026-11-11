@@ -185,9 +185,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="rooms-admin-page" aria-labelledby="rooms-admin-title">
-    <header class="page-header">
-      <div>
+  <section class="rooms-admin-page page-shell" aria-labelledby="rooms-admin-title">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 资源维护</p>
         <h1 id="rooms-admin-title">自习室管理</h1>
         <p class="page-summary">配置自习室基础信息、开放时段与座位布局，状态变更会记录审计。</p>
@@ -198,7 +198,7 @@ onMounted(() => {
       </div>
     </header>
 
-    <el-form class="filter-bar" :model="filters" @submit.prevent="search">
+    <el-form class="filter-bar toolbar-panel" :model="filters" @submit.prevent="search">
       <el-form-item label="名称或位置">
         <el-input v-model="filters.keyword" clearable :prefix-icon="Search" />
       </el-form-item>
@@ -379,34 +379,34 @@ onMounted(() => {
 <style scoped>
 .rooms-admin-page {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 7px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.9rem;
-  letter-spacing: -0.035em;
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-summary {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .page-actions,
@@ -423,10 +423,10 @@ onMounted(() => {
   grid-template-columns: minmax(220px, 1fr) 180px auto;
   gap: 12px;
   align-items: end;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .filter-bar :deep(.el-form-item) {
@@ -435,20 +435,19 @@ onMounted(() => {
 
 .native-filter-select {
   width: 100%;
-  height: 34px;
+  height: 38px;
   padding: 0 34px 0 11px;
-  border: 1px solid var(--el-border-color);
+  border: 1px solid var(--control-border);
   border-radius: var(--el-border-radius-base);
   color: var(--text);
-  background: var(--surface);
+  background: var(--surface-raised);
 }
 
 .table-panel {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .results {

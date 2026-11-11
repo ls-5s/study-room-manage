@@ -44,16 +44,22 @@ const emit = defineEmits<{
   min-width: 138px;
   gap: 4px;
   padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
-  background: var(--surface);
+  background: var(--surface-raised);
   text-align: left;
   cursor: pointer;
+  transition:
+    color 300ms var(--ease-out),
+    border-color 300ms var(--ease-out),
+    background-color 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
 }
 
 .slot-option:hover:not(:disabled) {
   border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .slot-option.selected {
@@ -71,15 +77,16 @@ const emit = defineEmits<{
 }
 
 .slot-option span {
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .slot-option strong {
-  font-size: 0.88rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .slot-option small {
   color: var(--status-bad);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 </style>

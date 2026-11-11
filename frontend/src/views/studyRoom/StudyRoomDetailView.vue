@@ -133,7 +133,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="detail-page" aria-labelledby="room-title">
+  <section class="detail-page page-shell" aria-labelledby="room-title">
     <RouterLink class="back-link" to="/home">
       <el-icon><ArrowLeft /></el-icon>
       返回自习室列表
@@ -147,8 +147,8 @@ onMounted(() => {
 
     <div v-loading="loadingRoom" class="detail-loading">
       <template v-if="room">
-        <header class="room-header">
-          <div>
+        <header class="room-header page-hero">
+          <div class="page-hero-copy">
             <p class="page-eyebrow">自习室详情</p>
             <h1 id="room-title">{{ room.name }}</h1>
             <p class="room-meta">
@@ -266,7 +266,7 @@ onMounted(() => {
 <style scoped>
 .detail-page {
   display: grid;
-  gap: 20px;
+  gap: 24px;
   min-height: 70svh;
   padding-bottom: 86px;
 }
@@ -277,7 +277,7 @@ onMounted(() => {
   gap: 6px;
   width: fit-content;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   text-decoration: none;
 }
 
@@ -292,29 +292,24 @@ onMounted(() => {
 }
 
 .room-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 28px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 220px;
 }
 
 .page-eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .room-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.7rem, 3vw, 2.4rem);
-  letter-spacing: -0.04em;
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
 }
 
 .room-meta {
@@ -322,8 +317,8 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 10px 20px;
   margin: 14px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .room-meta span {
@@ -347,7 +342,8 @@ onMounted(() => {
 
 .hero-count strong {
   color: var(--text);
-  font-size: 2.2rem;
+  font-size: 3rem;
+  font-weight: 500;
 }
 
 .hero-count small {
@@ -355,8 +351,9 @@ onMounted(() => {
 }
 
 .room-description {
-  margin: -6px 2px 0;
+  margin: -4px 2px 0;
   color: var(--text-secondary);
+  font-size: 1rem;
   line-height: 1.7;
 }
 
@@ -364,10 +361,10 @@ onMounted(() => {
 .seat-section {
   display: grid;
   gap: 16px;
-  padding: 22px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .section-heading {
@@ -380,13 +377,14 @@ onMounted(() => {
 .section-heading h2 {
   margin: 0;
   color: var(--text);
-  font-size: 1rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .section-heading p {
   margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .legend {
@@ -394,8 +392,8 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 8px 18px;
   padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-muted) 66%, transparent);
   color: var(--text-muted);
   font-size: 0.75rem;
 }
@@ -442,17 +440,17 @@ onMounted(() => {
   z-index: 9;
   right: clamp(20px, 2.5vw, 40px);
   bottom: 18px;
-  left: calc(232px + clamp(20px, 2.5vw, 40px));
+  left: calc(248px + clamp(20px, 2.4vw, 40px));
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   padding: 14px 18px;
   border: 1px solid var(--border-strong);
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: var(--topbar-surface);
   box-shadow: var(--shadow-raised);
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(22px) saturate(118%);
 }
 
 .selection-bar > div:first-child {

@@ -11,7 +11,7 @@ import type { EChartsCoreOption } from 'echarts/core'
 import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { getStatisticsOverview, getStatisticsTrend } from '../../api/statistics'
 import StatisticsChart from '../../components/statistics/StatisticsChart.vue'
-import { useThemeStore } from '../../stores/theme'
+import { useChartTheme } from '../../composables/useChartTheme'
 import type {
   StatisticsOverview,
   StatisticsTrend,
@@ -22,7 +22,6 @@ import { formatDateTime } from '../../utils/reservation'
 import { addDays, businessToday } from '../../utils/study-room'
 import { formatMetricRate, formatRate } from '../../utils/statistics'
 
-const themeStore = useThemeStore()
 const today = businessToday()
 const selectedDate = shallowRef(today)
 const overview = shallowRef<StatisticsOverview | null>(null)
@@ -79,31 +78,7 @@ const metricCards = computed(() => [
   },
 ])
 
-const colors = computed(() =>
-  themeStore.isDark
-    ? {
-        primary: '#72afd4',
-        success: '#76c79e',
-        warning: '#e3b76c',
-        danger: '#f18b81',
-        info: '#7db8dc',
-        text: '#b5c4d1',
-        muted: '#91a4b5',
-        grid: 'rgba(145, 164, 181, 0.18)',
-        tooltip: '#17232f',
-      }
-    : {
-        primary: '#1f4e79',
-        success: '#2b7354',
-        warning: '#a15c07',
-        danger: '#b42318',
-        info: '#28628f',
-        text: '#4c6478',
-        muted: '#5a7183',
-        grid: 'rgba(90, 113, 131, 0.16)',
-        tooltip: '#ffffff',
-      },
-)
+const colors = useChartTheme()
 const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const dayChartOption = computed<EChartsCoreOption>(() => {
@@ -361,14 +336,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="statistics-page" aria-labelledby="dashboard-title">
-    <header class="statistics-hero">
-      <div>
+  <section class="statistics-page page-shell" aria-labelledby="dashboard-title">
+    <header class="statistics-hero page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 统计</p>
         <h1 id="dashboard-title">管理仪表盘</h1>
         <p>从预约、签到、失约和计划容量中快速识别当天运行状态与近七天变化。</p>
       </div>
-      <div class="hero-actions">
+      <div class="hero-actions page-actions">
         <el-date-picker
           v-model="selectedDate"
           type="date"
@@ -501,7 +476,7 @@ onBeforeUnmount(() => {
         </div>
         <small>与图表使用同一组数据</small>
       </header>
-      <el-table :data="dayTrend?.items ?? []" border stripe>
+      <el-table :data="dayTrend?.items ?? []">
         <el-table-column prop="label" label="日期" min-width="80" />
         <el-table-column prop="reservationCount" label="预约" width="58" />
         <el-table-column prop="checkedInCount" label="签到" width="58" />
@@ -523,47 +498,28 @@ onBeforeUnmount(() => {
 <style scoped>
 .statistics-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .statistics-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 26px 28px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    radial-gradient(
-      circle at 88% 8%,
-      color-mix(in srgb, var(--accent) 18%, transparent),
-      transparent 30%
-    ),
-    linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 210px;
 }
 
 .page-eyebrow {
   margin: 0;
   color: var(--accent);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .statistics-hero h1 {
   margin: 8px 0 0;
-  color: var(--text);
-  font-size: clamp(1.7rem, 2.8vw, 2.45rem);
-  letter-spacing: -0.045em;
 }
 
 .statistics-hero p:last-child {
   max-width: 720px;
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.7;
+  margin: 12px 0 0;
 }
 
 .hero-actions {
@@ -576,7 +532,7 @@ onBeforeUnmount(() => {
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
   min-height: 120px;
 }
 
@@ -584,11 +540,10 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 13px;
   align-items: flex-start;
-  padding: 17px 18px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .metric-icon {
@@ -597,8 +552,8 @@ onBeforeUnmount(() => {
   height: 34px;
   flex-shrink: 0;
   place-items: center;
-  border-radius: 8px;
-  font-size: 17px;
+  border-radius: var(--radius-sm);
+  font-size: 18px;
 }
 
 .metric-primary .metric-icon {
@@ -629,27 +584,28 @@ onBeforeUnmount(() => {
 
 .metric-copy > span {
   color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 650;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .metric-copy strong {
   color: var(--text);
-  font-size: 1.62rem;
+  font-size: 2rem;
+  font-weight: 500;
   line-height: 1.2;
 }
 
 .metric-copy small {
   margin-left: 3px;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
 .metric-copy p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -659,10 +615,10 @@ onBeforeUnmount(() => {
   gap: 7px 18px;
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   color: var(--text-muted);
   background: var(--surface-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .context-strip span {
@@ -679,24 +635,23 @@ onBeforeUnmount(() => {
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .chart-loading-grid {
   padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
 .chart-panel,
 .detail-table-panel {
   min-width: 0;
-  padding: 18px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .panel-heading {
@@ -709,20 +664,21 @@ onBeforeUnmount(() => {
 
 .panel-heading span {
   color: var(--accent);
-  font-size: 0.66rem;
-  font-weight: 750;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .panel-heading h2 {
   margin: 4px 0 0;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .panel-heading small {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .detail-table-panel {
@@ -739,7 +695,7 @@ onBeforeUnmount(() => {
   .statistics-hero {
     align-items: flex-start;
     flex-direction: column;
-    padding: 21px;
+    padding: 24px;
   }
 
   .hero-actions {
@@ -755,7 +711,7 @@ onBeforeUnmount(() => {
 
   .chart-panel,
   .detail-table-panel {
-    padding: 15px;
+    padding: 16px;
   }
 }
 </style>

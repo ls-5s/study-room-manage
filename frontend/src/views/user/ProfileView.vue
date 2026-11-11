@@ -102,8 +102,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="profile-page" aria-labelledby="profile-title">
-    <header class="profile-header">
+  <section class="profile-page page-shell" aria-labelledby="profile-title">
+    <header class="profile-header page-hero">
       <div class="profile-heading">
         <div class="avatar" aria-hidden="true">
           <img v-if="profile?.avatarUrl" :src="profile.avatarUrl" alt="" />
@@ -237,15 +237,7 @@ onMounted(() => {
 }
 
 .profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 28px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  min-height: 190px;
 }
 
 .profile-heading {
@@ -261,11 +253,12 @@ onMounted(() => {
   flex-shrink: 0;
   place-items: center;
   overflow: hidden;
-  border-radius: 18px;
-  color: var(--accent-contrast);
-  background: var(--accent);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--action-text);
+  background: var(--action);
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .avatar img {
@@ -278,20 +271,23 @@ onMounted(() => {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .page-title {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.75rem;
-  line-height: 1.25;
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.12;
 }
 
 .page-summary {
-  margin: 6px 0 0;
+  margin: 10px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
 }
 
 .profile-tags {
@@ -304,13 +300,13 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .summary-item {
   min-width: 0;
-  padding: 18px 22px;
+  padding: 20px;
   border-right: 1px solid var(--border);
 }
 
@@ -329,7 +325,7 @@ onMounted(() => {
   display: inline-block;
   margin-top: 6px;
   color: var(--accent);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-decoration: none;
 }
 
@@ -341,7 +337,8 @@ onMounted(() => {
   display: block;
   overflow: hidden;
   color: var(--text);
-  font-size: 0.9375rem;
+  font-size: 1rem;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -360,9 +357,8 @@ onMounted(() => {
 .account-tabs,
 .profile-aside {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .account-tabs {

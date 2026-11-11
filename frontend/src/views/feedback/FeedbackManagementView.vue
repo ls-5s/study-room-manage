@@ -272,14 +272,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="admin-feedback-page" aria-labelledby="admin-feedback-title">
-    <header class="admin-hero">
-      <div>
+  <section class="admin-feedback-page page-shell" aria-labelledby="admin-feedback-title">
+    <header class="admin-hero page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 反馈处理</p>
         <h1 id="admin-feedback-title">反馈处理工作台</h1>
         <p>集中核实占座举报与使用问题，留下可追溯的处理结果。</p>
       </div>
-      <div class="hero-total">
+      <div class="hero-total page-actions">
         <span>全部工单</span>
         <strong>{{ summary.total }}</strong>
         <small>条记录</small>
@@ -471,25 +471,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .admin-feedback-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .admin-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 25px 28px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    radial-gradient(
-      circle at 90% 15%,
-      color-mix(in srgb, var(--accent) 16%, transparent),
-      transparent 30%
-    ),
-    linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 210px;
 }
 
 .page-eyebrow,
@@ -497,49 +483,45 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--accent);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .admin-hero h1 {
   margin: 8px 0 0;
-  color: var(--text);
-  font-size: clamp(1.65rem, 2.7vw, 2.35rem);
-  letter-spacing: -0.04em;
 }
 
 .admin-hero p:last-child {
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.7;
+  margin: 12px 0 0;
 }
 
 .hero-total {
   display: grid;
   min-width: 125px;
-  padding: 15px 18px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  padding: 18px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-raised) 58%, transparent);
 }
 
 .hero-total span,
 .hero-total small {
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .hero-total strong {
   margin: 4px 0;
   color: var(--text);
-  font-size: 2rem;
+  font-size: 2.5rem;
+  font-weight: 500;
   line-height: 1;
 }
 
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .summary-card {
@@ -547,9 +529,9 @@ onBeforeUnmount(() => {
   grid-template-columns: auto 1fr auto;
   gap: 9px;
   align-items: center;
-  padding: 14px 16px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   background: var(--surface);
   cursor: pointer;
@@ -561,6 +543,18 @@ onBeforeUnmount(() => {
   border-color: var(--accent);
 }
 
+.summary-card:hover {
+  background: color-mix(in srgb, var(--surface) 82%, var(--accent-soft));
+  transform: translateY(-1px);
+}
+
+.summary-card {
+  transition:
+    border-color 300ms var(--ease-out),
+    background-color 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
+}
+
 .summary-card.active {
   box-shadow: 0 0 0 1px var(--accent);
 }
@@ -570,13 +564,14 @@ onBeforeUnmount(() => {
 }
 
 .summary-card span {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .summary-card strong {
   color: var(--text);
-  font-size: 1.35rem;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 .summary-pending .el-icon {
@@ -598,11 +593,10 @@ onBeforeUnmount(() => {
 .surface {
   display: grid;
   gap: 16px;
-  padding: 20px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .surface-heading {
@@ -615,7 +609,8 @@ onBeforeUnmount(() => {
 .surface-heading h2 {
   margin: 5px 0 0;
   color: var(--text);
-  font-size: 1.08rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .filter-panel {
@@ -624,8 +619,8 @@ onBeforeUnmount(() => {
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-muted) 66%, transparent);
 }
 
 .filter-panel :deep(.el-form-item) {
@@ -647,13 +642,13 @@ onBeforeUnmount(() => {
 
 .native-select {
   width: 100%;
-  height: 34px;
+  height: 38px;
   padding: 0 9px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--surface);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .filter-actions {
@@ -672,8 +667,8 @@ onBeforeUnmount(() => {
 
 .ticket-id {
   color: var(--accent);
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .cell-stack,
@@ -684,18 +679,18 @@ onBeforeUnmount(() => {
 
 .cell-stack strong {
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .cell-stack small {
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .problem-cell span {
   color: var(--accent);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .problem-cell p {
@@ -703,7 +698,7 @@ onBeforeUnmount(() => {
   margin: 0;
   overflow: hidden;
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;

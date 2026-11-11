@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { submitCheckIn } from '../../api/check-in'
 import type { CheckInPayload, ReservationDetail } from '../../types/reservation'
 import { RequestError } from '../../utils/request'
@@ -15,7 +15,7 @@ const emit = defineEmits<{
   'checked-in': []
 }>()
 
-const raw = ref('')
+const raw = shallowRef('')
 const pending = shallowRef(false)
 const error = shallowRef('')
 const scannerOpen = shallowRef(false)
@@ -101,11 +101,7 @@ async function onDetected(text: string) {
 
     <el-alert v-if="error" type="error" :title="error" :closable="false" show-icon />
 
-    <QrScanner
-      v-if="scannerOpen"
-      @detected="onDetected"
-      @close="scannerOpen = false"
-    />
+    <QrScanner v-if="scannerOpen" @detected="onDetected" @close="scannerOpen = false" />
 
     <el-input
       v-model="raw"
@@ -131,10 +127,10 @@ async function onDetected(text: string) {
 .check-in-panel {
   display: grid;
   gap: 12px;
-  padding: 20px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .check-in-panel header {
@@ -147,13 +143,14 @@ async function onDetected(text: string) {
 .check-in-panel h2 {
   margin: 0;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .check-in-panel p {
   margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .check-in-panel footer {

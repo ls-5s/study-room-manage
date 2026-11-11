@@ -25,7 +25,28 @@ import ThemeToggle from '../components/ThemeToggle.vue'
     </header>
 
     <main id="auth-content" class="auth-content" tabindex="-1">
-      <RouterView />
+      <div class="auth-stage">
+        <aside class="auth-story" aria-label="校园自习室介绍">
+          <p class="story-eyebrow">CAMPUS STUDY / SPACE</p>
+          <h2>给每一次专注，<br />留一张安静的桌面。</h2>
+          <p class="story-summary">
+            预约、签到、问题反馈与空间数据汇集在同一处。清晰的状态和克制的时间提醒，让使用过程保持简单。
+          </p>
+          <div class="story-notes">
+            <span><strong>01</strong> 找到合适空间</span>
+            <span><strong>02</strong> 按计划完成签到</span>
+            <span><strong>03</strong> 保持空间有序</span>
+          </div>
+          <div class="story-orbit" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        </aside>
+        <div class="auth-form-stage">
+          <RouterView />
+        </div>
+      </div>
     </main>
 
     <footer class="auth-footer">
@@ -42,13 +63,7 @@ import ThemeToggle from '../components/ThemeToggle.vue'
   min-height: 100svh;
   flex-direction: column;
   overflow: hidden;
-  background:
-    radial-gradient(
-      circle at 82% 12%,
-      color-mix(in srgb, var(--accent) 16%, transparent),
-      transparent 30rem
-    ),
-    linear-gradient(145deg, var(--canvas) 0%, var(--surface-muted) 52%, var(--canvas) 100%);
+  background: var(--canvas);
 }
 
 .auth-shell::before {
@@ -57,9 +72,29 @@ import ThemeToggle from '../components/ThemeToggle.vue'
   right: -120px;
   width: 360px;
   height: 360px;
-  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
   border-radius: 50%;
   content: '';
+  pointer-events: none;
+}
+
+.auth-shell::after {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 8%, var(--gradient-accent), transparent 30rem),
+    radial-gradient(circle at 88% 76%, var(--gradient-secondary), transparent 34rem),
+    radial-gradient(circle at 74% 16%, var(--gradient-warm), transparent 22rem),
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    64px 64px,
+    64px 64px;
+  content: '';
+  opacity: 0.34;
+  mask-image: linear-gradient(to bottom, #000, transparent 72%);
   pointer-events: none;
 }
 
@@ -87,7 +122,8 @@ import ThemeToggle from '../components/ThemeToggle.vue'
 .auth-footer,
 .auth-content {
   position: relative;
-  width: min(100%, 1040px);
+  z-index: 1;
+  width: min(100%, 1180px);
   margin-inline: auto;
 }
 
@@ -119,9 +155,11 @@ import ThemeToggle from '../components/ThemeToggle.vue'
   height: 40px;
   flex-shrink: 0;
   place-items: center;
-  border-radius: 9px;
-  color: var(--accent-contrast);
-  background: var(--accent);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--action-text);
+  background: var(--action);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 12%);
   font-size: 20px;
 }
 
@@ -149,6 +187,123 @@ import ThemeToggle from '../components/ThemeToggle.vue'
   padding: 40px 32px 64px;
 }
 
+.auth-stage {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 0.86fr) minmax(420px, 1.14fr);
+  gap: clamp(40px, 6vw, 80px);
+  align-items: center;
+}
+
+.auth-story {
+  position: relative;
+  max-width: 480px;
+  padding: 32px 0;
+}
+
+.story-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.auth-story h2 {
+  margin: 24px 0 0;
+  color: var(--text);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+}
+
+.story-summary {
+  max-width: 460px;
+  margin: 24px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.story-notes {
+  display: grid;
+  gap: 0;
+  margin-top: 48px;
+  border-top: 1px solid var(--border);
+}
+
+.story-notes span {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.story-notes strong {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.story-orbit {
+  position: absolute;
+  z-index: -1;
+  top: -56px;
+  right: -40px;
+  width: 280px;
+  height: 280px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.story-orbit::before,
+.story-orbit::after {
+  position: absolute;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  content: '';
+}
+
+.story-orbit::before {
+  inset: 36px;
+}
+
+.story-orbit::after {
+  inset: 82px;
+}
+
+.story-orbit span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+
+.story-orbit span:nth-child(1) {
+  top: 40px;
+  left: 62px;
+}
+
+.story-orbit span:nth-child(2) {
+  right: 28px;
+  bottom: 92px;
+}
+
+.story-orbit span:nth-child(3) {
+  bottom: 38px;
+  left: 108px;
+}
+
+.auth-form-stage {
+  min-width: 0;
+}
+
 .auth-footer {
   display: flex;
   justify-content: space-between;
@@ -159,19 +314,36 @@ import ThemeToggle from '../components/ThemeToggle.vue'
 }
 
 .auth-footer a {
-  color: var(--navy-700);
-  font-weight: 600;
+  color: var(--accent);
+  font-weight: 500;
   text-decoration: none;
 }
 
 .auth-footer a:hover {
-  color: var(--navy-900);
+  color: var(--accent-hover);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .auth-content:focus {
   outline: none;
+}
+
+@media (max-width: 940px) {
+  .auth-stage {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .auth-story {
+    max-width: 720px;
+    padding: 0;
+  }
+
+  .story-notes,
+  .story-orbit {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -184,6 +356,23 @@ import ThemeToggle from '../components/ThemeToggle.vue'
   .auth-content {
     align-items: flex-start;
     padding-block: 28px 48px;
+  }
+
+  .auth-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-story {
+    padding: 8px 0 0;
+  }
+
+  .auth-story h2 {
+    font-size: 2rem;
+  }
+
+  .story-notes,
+  .story-orbit {
+    display: none;
   }
 
   .auth-footer {

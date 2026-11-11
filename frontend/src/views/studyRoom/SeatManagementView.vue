@@ -121,7 +121,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="seat-admin-page" aria-labelledby="seat-admin-title">
+  <section class="seat-admin-page page-shell" aria-labelledby="seat-admin-title">
     <RouterLink class="back-link" to="/admin/study-rooms">
       <el-icon><ArrowLeft /></el-icon>
       返回自习室管理
@@ -135,8 +135,8 @@ onMounted(() => {
 
     <div v-loading="loading" class="seat-admin-content">
       <template v-if="room">
-        <header class="page-header">
-          <div>
+        <header class="page-header page-hero">
+          <div class="page-hero-copy">
             <p class="page-eyebrow">管理后台 / 座位布局</p>
             <h1 id="seat-admin-title">{{ room.name }}</h1>
             <p class="page-summary">
@@ -233,7 +233,7 @@ onMounted(() => {
 <style scoped>
 .seat-admin-page {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .back-link {
@@ -242,7 +242,7 @@ onMounted(() => {
   gap: 6px;
   width: fit-content;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   text-decoration: none;
 }
 
@@ -253,30 +253,30 @@ onMounted(() => {
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 7px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.9rem;
-  letter-spacing: -0.035em;
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-summary {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .status-tag {
@@ -297,30 +297,31 @@ onMounted(() => {
 .summary-strip > div {
   display: grid;
   gap: 5px;
-  padding: 16px 18px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .summary-strip span,
 .summary-strip small {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .summary-strip strong {
   color: var(--text);
-  font-size: 1.5rem;
+  font-size: 2rem;
+  font-weight: 500;
 }
 
 .seat-panel {
   display: grid;
   gap: 16px;
-  padding: 22px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .section-heading {
@@ -333,13 +334,14 @@ onMounted(() => {
 .section-heading h2 {
   margin: 0;
   color: var(--text);
-  font-size: 1rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .section-heading p {
   margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .legend {
@@ -382,10 +384,10 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 16px 18px;
+  padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .slot-summary div {

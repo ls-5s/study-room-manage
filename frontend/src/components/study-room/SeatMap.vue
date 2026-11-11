@@ -87,7 +87,7 @@ const cells = computed(() => {
   min-width: max-content;
   padding: 18px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background:
     linear-gradient(var(--border) 1px, transparent 1px),
     linear-gradient(90deg, var(--border) 1px, transparent 1px), var(--surface-muted);
@@ -104,11 +104,11 @@ const cells = computed(() => {
   min-height: 48px;
   padding: 6px 4px;
   border: 1px solid var(--status-ok-border);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--status-ok);
   background: var(--status-ok-tint);
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -145,7 +145,7 @@ const cells = computed(() => {
 }
 
 .aisle {
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: transparent;
 }
 

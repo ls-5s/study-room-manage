@@ -29,9 +29,10 @@ const homePath = computed(() => auth.homePath)
   align-content: center;
   padding: 48px 24px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(24px);
   text-align: center;
 }
 
@@ -40,7 +41,7 @@ const homePath = computed(() => auth.homePath)
   width: 64px;
   height: 64px;
   place-items: center;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   color: var(--status-warn);
   background: var(--status-warn-tint);
   font-size: 30px;
@@ -50,19 +51,21 @@ const homePath = computed(() => auth.homePath)
   margin: 20px 0 0;
   color: var(--text-muted);
   font-size: 0.875rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.12em;
 }
 
 .forbidden-title {
   margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.75rem;
+  font-size: 2rem;
+  font-weight: 600;
   line-height: 1.3;
 }
 
 .forbidden-summary {
   margin: 10px 0 24px;
   color: var(--text-secondary);
+  font-size: 1rem;
 }
 </style>

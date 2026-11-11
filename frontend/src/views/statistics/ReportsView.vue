@@ -6,7 +6,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
 import { getAdminStudyRooms } from '../../api/admin-room'
 import { getStatisticsExport, getStatisticsTrend } from '../../api/statistics'
 import StatisticsChart from '../../components/statistics/StatisticsChart.vue'
-import { useThemeStore } from '../../stores/theme'
+import { useChartTheme } from '../../composables/useChartTheme'
 import type { StudyRoomSummary } from '../../types/study-room'
 import type {
   StatisticsGroupBy,
@@ -24,7 +24,6 @@ import {
   statisticsRangeLabel,
 } from '../../utils/statistics'
 
-const themeStore = useThemeStore()
 const today = businessToday()
 const filters = reactive({
   dates: [addDays(today, -6), today] as string[],
@@ -50,27 +49,7 @@ const rangeLabel = computed(() =>
     ? statisticsRangeLabel(filters.dates[0] ?? '', filters.dates[1] ?? '')
     : '最近 7 天',
 )
-const colors = computed(() =>
-  themeStore.isDark
-    ? {
-        primary: '#72afd4',
-        success: '#76c79e',
-        danger: '#f18b81',
-        text: '#b5c4d1',
-        muted: '#91a4b5',
-        grid: 'rgba(145, 164, 181, 0.18)',
-        tooltip: '#17232f',
-      }
-    : {
-        primary: '#1f4e79',
-        success: '#2b7354',
-        danger: '#b42318',
-        text: '#4c6478',
-        muted: '#5a7183',
-        grid: 'rgba(90, 113, 131, 0.16)',
-        tooltip: '#ffffff',
-      },
-)
+const colors = useChartTheme()
 const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const countChartOption = computed<EChartsCoreOption>(() => {
@@ -275,14 +254,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="reports-page" aria-labelledby="reports-title">
-    <header class="reports-hero">
-      <div>
+  <section class="reports-page page-shell" aria-labelledby="reports-title">
+    <header class="reports-hero page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 报表</p>
         <h1 id="reports-title">统计报表</h1>
         <p>按日期、自习室或开放时段汇总预约与使用数据，并导出当前筛选结果。</p>
       </div>
-      <div class="hero-export">
+      <div class="hero-export page-actions">
         <span>{{ rangeLabel }}</span>
         <el-button
           type="primary"
@@ -296,7 +275,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <el-form class="filter-panel" @submit.prevent="load">
+    <el-form class="filter-panel toolbar-panel" @submit.prevent="load">
       <el-form-item label="日期范围">
         <el-date-picker
           v-model="filters.dates"
@@ -390,7 +369,7 @@ onBeforeUnmount(() => {
           </div>
           <small>CSV 与此表使用同一接口结果</small>
         </header>
-        <el-table v-loading="loading" :data="trend?.items ?? []" border stripe max-height="560">
+        <el-table v-loading="loading" :data="trend?.items ?? []" max-height="560">
           <el-table-column
             prop="label"
             :label="statisticsGroupLabel(filters.groupBy)"
@@ -421,47 +400,28 @@ onBeforeUnmount(() => {
 <style scoped>
 .reports-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .reports-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 28px;
-  padding: 26px 28px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    radial-gradient(
-      circle at 88% 8%,
-      color-mix(in srgb, var(--accent) 18%, transparent),
-      transparent 30%
-    ),
-    linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 210px;
 }
 
 .page-eyebrow {
   margin: 0;
   color: var(--accent);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .reports-hero h1 {
   margin: 8px 0 0;
-  color: var(--text);
-  font-size: clamp(1.7rem, 2.8vw, 2.4rem);
-  letter-spacing: -0.045em;
 }
 
 .reports-hero p:last-child {
   max-width: 700px;
-  margin: 10px 0 0;
-  color: var(--text-secondary);
-  line-height: 1.7;
+  margin: 12px 0 0;
 }
 
 .hero-export {
@@ -480,10 +440,10 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(260px, 1.4fr) minmax(130px, 0.55fr) minmax(160px, 0.8fr) auto;
   gap: 12px;
   align-items: end;
-  padding: 17px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .filter-panel :deep(.el-form-item) {
@@ -497,19 +457,19 @@ onBeforeUnmount(() => {
 
 .native-select {
   width: 100%;
-  height: 34px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--surface);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 .loading-panel {
   min-height: 360px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
@@ -519,26 +479,25 @@ onBeforeUnmount(() => {
   gap: 7px 18px;
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   color: var(--text-muted);
   background: var(--surface-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .chart-panel,
 .table-panel {
   min-width: 0;
-  padding: 18px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .panel-heading {
@@ -551,20 +510,21 @@ onBeforeUnmount(() => {
 
 .panel-heading span {
   color: var(--accent);
-  font-size: 0.66rem;
-  font-weight: 750;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .panel-heading h2 {
   margin: 4px 0 0;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .panel-heading small {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
 }
 
 .table-panel {
@@ -575,7 +535,7 @@ onBeforeUnmount(() => {
   .reports-hero {
     align-items: flex-start;
     flex-direction: column;
-    padding: 21px;
+    padding: 24px;
   }
 
   .hero-export {
@@ -605,7 +565,7 @@ onBeforeUnmount(() => {
 
   .chart-panel,
   .table-panel {
-    padding: 15px;
+    padding: 16px;
   }
 }
 </style>

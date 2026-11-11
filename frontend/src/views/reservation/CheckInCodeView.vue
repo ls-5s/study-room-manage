@@ -96,9 +96,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="code-page">
-    <header class="page-header">
-      <div>
+  <section class="code-page page-shell">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 预约</p>
         <h1>签到码展示</h1>
         <p class="page-note">
@@ -108,7 +108,7 @@ onBeforeUnmount(() => {
       <el-button :icon="RefreshRight" :loading="loading" @click="refresh">立即刷新</el-button>
     </header>
 
-    <el-form class="room-picker" @submit.prevent>
+    <el-form class="room-picker toolbar-panel" @submit.prevent>
       <el-form-item label="自习室">
         <!-- Native select: Element's ElSelect prop typings do not resolve under this
              element-plus + vue-tsc combination, and a plain select keeps the page typed. -->
@@ -165,34 +165,34 @@ onBeforeUnmount(() => {
 <style scoped>
 .code-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-note {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .room-picker {
@@ -201,24 +201,24 @@ onBeforeUnmount(() => {
   gap: 4px 20px;
   padding: 14px 16px 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .room-location {
   color: var(--text-secondary);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
 
 .native-select {
   min-width: 260px;
-  height: 32px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  background: var(--surface);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
 
 .code-body {
@@ -234,14 +234,14 @@ onBeforeUnmount(() => {
   gap: 10px;
   padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: #fff;
 }
 
 .qr-hint {
   margin: 0;
   color: #4b5563;
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .code-meta {
@@ -249,8 +249,8 @@ onBeforeUnmount(() => {
   gap: 10px;
   padding: 18px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .meta-row {
@@ -262,12 +262,12 @@ onBeforeUnmount(() => {
 
 .meta-row span {
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .meta-row strong {
   color: var(--text);
-  font-size: 0.88rem;
+  font-size: 0.875rem;
 }
 
 .payload-box {
@@ -276,8 +276,8 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .payload-box header {
@@ -289,23 +289,23 @@ onBeforeUnmount(() => {
 
 .payload-box header span {
   color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .payload-box header small {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .payload-box pre {
   margin: 0;
   padding: 12px;
   overflow-x: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface-muted);
   color: var(--text-secondary);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;

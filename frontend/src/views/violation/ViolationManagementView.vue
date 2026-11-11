@@ -3,7 +3,12 @@ import { RefreshRight, Search, Warning } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, reactive, shallowRef } from 'vue'
 import { getAdminStudyRooms } from '../../api/admin-room'
-import { getViolationRules, listAdminViolations, revokeViolation, updateViolationRules } from '../../api/violation'
+import {
+  getViolationRules,
+  listAdminViolations,
+  revokeViolation,
+  updateViolationRules,
+} from '../../api/violation'
 import type { StudyRoomSummary } from '../../types/study-room'
 import type {
   AdminViolationRecord,
@@ -188,9 +193,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="admin-violation-page">
-    <header class="page-header">
-      <div>
+  <section class="admin-violation-page page-shell">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理后台 / 违约</p>
         <h1>违约管理</h1>
         <p class="page-note">配置限制规则、核对失约记录，并在核实后带原因撤销。</p>
@@ -201,12 +206,20 @@ onMounted(() => {
     <section v-loading="rulesLoading" class="rules-card">
       <div class="rules-heading">
         <h2>规则配置</h2>
-        <p>阈值指累计有效违约达到多少次后开始限制预约；修改只影响之后触发的限制，不追溯已生效区间。</p>
+        <p>
+          阈值指累计有效违约达到多少次后开始限制预约；修改只影响之后触发的限制，不追溯已生效区间。
+        </p>
       </div>
       <div class="rules-form">
         <label>
           <span>违约阈值（次）</span>
-          <input v-model.number="rules.threshold" class="native-input" type="number" min="1" max="20" />
+          <input
+            v-model.number="rules.threshold"
+            class="native-input"
+            type="number"
+            min="1"
+            max="20"
+          />
         </label>
         <label>
           <span>限制天数（天）</span>
@@ -226,9 +239,14 @@ onMounted(() => {
       </p>
     </section>
 
-    <el-form class="filter-panel" @submit.prevent="search">
+    <el-form class="filter-panel toolbar-panel" @submit.prevent="search">
       <el-form-item label="学号">
-        <el-input v-model="filters.studentNo" placeholder="精确学号" clearable style="width: 150px" />
+        <el-input
+          v-model="filters.studentNo"
+          placeholder="精确学号"
+          clearable
+          style="width: 150px"
+        />
       </el-form-item>
       <el-form-item label="自习室">
         <select v-model="filters.roomId" class="native-select" aria-label="按自习室筛选">
@@ -265,7 +283,7 @@ onMounted(() => {
 
     <el-alert v-if="error" type="error" :title="error" :closable="false" show-icon />
 
-    <el-table v-loading="loading" :data="items" border stripe>
+    <el-table v-loading="loading" :data="items">
       <el-table-column label="学生" min-width="150">
         <template #default="{ row }">
           <div class="cell-stack">
@@ -278,9 +296,7 @@ onMounted(() => {
         <template #default="{ row }">
           <div class="cell-stack">
             <strong>{{ row.roomName }} · {{ row.seatNo }}</strong>
-            <small>
-              {{ row.reserveDate }} {{ formatTimeRange(row.startAt, row.endAt) }}
-            </small>
+            <small> {{ row.reserveDate }} {{ formatTimeRange(row.startAt, row.endAt) }} </small>
           </div>
         </template>
       </el-table-column>
@@ -332,7 +348,9 @@ onMounted(() => {
         <el-descriptions-item label="预约时段">
           {{ detail.reserveDate }} {{ formatTimeRange(detail.startAt, detail.endAt) }}
         </el-descriptions-item>
-        <el-descriptions-item label="触发时间">{{ formatDateTime(detail.occurredAt) }}</el-descriptions-item>
+        <el-descriptions-item label="触发时间">{{
+          formatDateTime(detail.occurredAt)
+        }}</el-descriptions-item>
         <el-descriptions-item label="说明">{{ detail.reason }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           {{ violationStatusLabels[detail.status] }}
@@ -351,55 +369,56 @@ onMounted(() => {
 <style scoped>
 .admin-violation-page {
   display: grid;
-  gap: 14px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
 }
 
 .page-header h1 {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .page-note {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .rules-card {
   display: grid;
   gap: 12px;
-  padding: 18px 20px;
+  padding: 24px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .rules-heading h2 {
   margin: 0;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .rules-heading p {
   margin: 6px 0 0;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .rules-form {
@@ -413,35 +432,35 @@ onMounted(() => {
   display: grid;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: 0.875rem;
 }
 
 .native-input {
   width: 130px;
-  height: 32px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  background: var(--surface);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
 
 .native-select {
   min-width: 180px;
-  height: 32px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
-  background: var(--surface);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
 
 .rules-summary {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .rules-summary strong {
@@ -454,8 +473,8 @@ onMounted(() => {
   gap: 4px 16px;
   padding: 14px 16px 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .cell-stack {
@@ -465,12 +484,13 @@ onMounted(() => {
 
 .cell-stack strong {
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .cell-stack small {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .empty-state {

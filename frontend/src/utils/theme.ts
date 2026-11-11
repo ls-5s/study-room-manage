@@ -29,7 +29,7 @@ export function applyTheme(theme: AppTheme) {
 
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', theme === 'dark' ? '#0f1822' : '#1f4e79')
+    ?.setAttribute('content', theme === 'dark' ? '#080c0f' : '#f1f3f4')
 }
 
 export function persistTheme(theme: AppTheme) {

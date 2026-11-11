@@ -303,9 +303,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="feedback-page" aria-labelledby="feedback-title">
-    <header class="feedback-hero">
-      <div class="hero-copy">
+  <section class="feedback-page page-shell" aria-labelledby="feedback-title">
+    <header class="feedback-hero page-hero">
+      <div class="hero-copy page-hero-copy">
         <p class="page-eyebrow">学生服务 / 反馈工单</p>
         <h1 id="feedback-title">让每一个使用问题都有回应</h1>
         <p>
@@ -686,25 +686,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .feedback-page {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .feedback-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 28px 30px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    radial-gradient(
-      circle at 88% 12%,
-      color-mix(in srgb, var(--accent) 18%, transparent),
-      transparent 30%
-    ),
-    linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 230px;
 }
 
 .hero-copy {
@@ -716,21 +702,19 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--accent);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .feedback-hero h1 {
   margin: 9px 0 0;
-  color: var(--text);
-  font-size: clamp(1.8rem, 3vw, 2.65rem);
-  letter-spacing: -0.045em;
 }
 
 .feedback-hero p:last-child {
   max-width: 680px;
   margin: 12px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
   line-height: 1.75;
 }
 
@@ -738,10 +722,11 @@ onBeforeUnmount(() => {
   display: grid;
   min-width: 160px;
   gap: 10px;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  padding: 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-raised) 58%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 .hero-steps span {
@@ -749,12 +734,12 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 9px;
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 .hero-steps strong {
   color: var(--accent);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
 }
 
@@ -780,8 +765,8 @@ onBeforeUnmount(() => {
   color: var(--text-secondary);
   background: transparent;
   cursor: pointer;
-  font-size: 0.84rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .feedback-tab-list button:hover {
@@ -802,8 +787,8 @@ onBeforeUnmount(() => {
 
 .surface {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
   box-shadow: var(--shadow-card);
 }
 
@@ -823,13 +808,14 @@ onBeforeUnmount(() => {
 .section-heading h2 {
   margin: 5px 0 0;
   color: var(--text);
-  font-size: 1.12rem;
+  font-size: 1.25rem;
+  font-weight: 500;
 }
 
 .required-note,
 .field-label small {
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -840,8 +826,8 @@ onBeforeUnmount(() => {
 
 .field-label {
   color: var(--text);
-  font-size: 0.8rem;
-  font-weight: 650;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .field-label > span {
@@ -856,7 +842,7 @@ onBeforeUnmount(() => {
 .field-error,
 .field-warning {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .field-hint {
@@ -873,13 +859,13 @@ onBeforeUnmount(() => {
 
 .native-select {
   width: 100%;
-  height: 34px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--text);
-  background: var(--surface);
-  font-size: 0.8rem;
+  background: var(--surface-raised);
+  font-size: 0.875rem;
 }
 
 .native-select:disabled {
@@ -913,12 +899,12 @@ onBeforeUnmount(() => {
 }
 
 .type-grid strong {
-  font-size: 0.84rem;
+  font-size: 0.875rem;
 }
 
 .type-grid small {
   color: inherit;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   opacity: 0.78;
 }
 
@@ -939,7 +925,7 @@ onBeforeUnmount(() => {
 .form-footer p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.55;
 }
 
@@ -958,8 +944,8 @@ onBeforeUnmount(() => {
   top: 86px;
   padding: 22px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(160deg, var(--surface), var(--surface-muted));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .guide-mark {
@@ -976,7 +962,8 @@ onBeforeUnmount(() => {
 .feedback-guide h2 {
   margin: 16px 0 10px;
   color: var(--text);
-  font-size: 1rem;
+  font-size: 1.125rem;
+  font-weight: 500;
 }
 
 .feedback-guide ul {
@@ -985,7 +972,7 @@ onBeforeUnmount(() => {
   margin: 0;
   padding-left: 18px;
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   line-height: 1.6;
 }
 
@@ -1000,13 +987,13 @@ onBeforeUnmount(() => {
 .guide-summary span,
 .guide-summary small {
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .guide-summary strong {
   margin-bottom: 4px;
   color: var(--text);
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .mine-surface {
@@ -1022,7 +1009,7 @@ onBeforeUnmount(() => {
   gap: 0 14px;
   padding: 14px 14px 0;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: var(--surface-muted);
 }
 
@@ -1055,14 +1042,15 @@ onBeforeUnmount(() => {
 
 .ticket-id {
   color: var(--accent);
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
   letter-spacing: 0.05em;
 }
 
 .ticket-cell strong {
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .resource-cell {
@@ -1070,7 +1058,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .pagination-row {
@@ -1094,14 +1082,15 @@ onBeforeUnmount(() => {
 .detail-heading p {
   margin: 0 0 5px;
   color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .detail-heading h2 {
   margin: 0;
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: 500;
 }
 
 .detail-grid {
@@ -1116,13 +1105,13 @@ onBeforeUnmount(() => {
 .detail-grid dt {
   margin-bottom: 4px;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .detail-grid dd {
   margin: 0;
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -1134,14 +1123,14 @@ onBeforeUnmount(() => {
 .detail-result h3 {
   margin: 0 0 10px;
   color: var(--text);
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 
 .detail-section p,
 .detail-result p {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   line-height: 1.8;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -1173,7 +1162,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   color: var(--status-warn);
   background: var(--status-warn-tint);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
 }
 
 @media (max-width: 1050px) {

@@ -134,13 +134,24 @@ async function submit() {
 
 <style scoped>
 .auth-card {
+  position: relative;
   width: min(100%, 460px);
   margin-inline: auto;
-  padding: 36px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  box-shadow: var(--shadow-raised);
+  overflow: hidden;
+  padding: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: 24px;
+  background: var(--glass-gradient);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(28px) saturate(118%);
+}
+
+.auth-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 38%), transparent);
+  content: '';
 }
 
 .auth-intro {
@@ -148,25 +159,26 @@ async function submit() {
 }
 
 .auth-eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .auth-title {
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 650;
-  letter-spacing: -0.035em;
-  line-height: 1.2;
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
 }
 
 .auth-summary {
   margin: 12px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
   line-height: 1.7;
 }
 
@@ -190,7 +202,7 @@ async function submit() {
 
 .auth-switch a {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -211,7 +223,12 @@ async function submit() {
 
 @media (max-width: 600px) {
   .auth-card {
+    border-radius: 16px;
     padding: 28px 22px;
+  }
+
+  .auth-title {
+    font-size: 1.875rem;
   }
 }
 </style>

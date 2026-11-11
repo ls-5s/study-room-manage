@@ -110,9 +110,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="home-page" aria-labelledby="home-title">
-    <header class="home-hero">
-      <div>
+  <section class="home-page page-shell" aria-labelledby="home-title">
+    <header class="home-hero page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">学生服务 / 自习室</p>
         <h1 id="home-title">找到一间适合专注的自习室</h1>
         <p class="hero-summary">
@@ -126,7 +126,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <el-form class="filter-panel" :model="filters" @submit.prevent="search">
+    <el-form class="filter-panel toolbar-panel" :model="filters" @submit.prevent="search">
       <el-form-item label="名称或位置">
         <el-input
           v-model="filters.keyword"
@@ -181,6 +181,14 @@ onBeforeUnmount(() => {
       </template>
     </el-alert>
 
+    <div class="results-heading">
+      <div>
+        <span>AVAILABLE SPACES</span>
+        <h2>开放中的自习空间</h2>
+      </div>
+      <small>共 {{ total }} 间</small>
+    </div>
+
     <div v-loading="loading" class="room-results">
       <div v-if="rooms.length" class="room-grid">
         <RoomCard v-for="room in rooms" :key="room.id" :room="room" />
@@ -208,32 +216,18 @@ onBeforeUnmount(() => {
 <style scoped>
 .home-page {
   display: grid;
-  gap: 22px;
+  gap: 24px;
 }
 
 .home-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 28px 30px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background:
-    radial-gradient(
-      circle at 88% 10%,
-      color-mix(in srgb, var(--accent) 18%, transparent),
-      transparent 30%
-    ),
-    linear-gradient(135deg, var(--surface), var(--accent-soft));
+  min-height: 240px;
 }
 
 .page-eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
@@ -241,24 +235,28 @@ onBeforeUnmount(() => {
   max-width: 720px;
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.8rem, 3vw, 2.7rem);
-  letter-spacing: -0.045em;
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.05;
 }
 
 .hero-summary {
   max-width: 680px;
   margin: 12px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
   line-height: 1.75;
 }
 
 .hero-stat {
   display: grid;
-  min-width: 130px;
-  padding: 16px 20px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  min-width: 168px;
+  padding: 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface-raised) 58%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 .hero-stat span,
@@ -270,7 +268,8 @@ onBeforeUnmount(() => {
 .hero-stat strong {
   margin: 4px 0;
   color: var(--text);
-  font-size: 2rem;
+  font-size: 3rem;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -279,10 +278,10 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(140px, 1fr)) auto;
   gap: 12px;
   align-items: end;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .filter-panel :deep(.el-form-item) {
@@ -300,6 +299,34 @@ onBeforeUnmount(() => {
   font-size: 0.75rem;
 }
 
+.results-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.results-heading span {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.results-heading h2 {
+  margin: 8px 0 0;
+  color: var(--text);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.results-heading small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
 .room-results {
   min-height: 300px;
 }
@@ -307,7 +334,7 @@ onBeforeUnmount(() => {
 .room-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .pagination-row {
@@ -346,6 +373,12 @@ onBeforeUnmount(() => {
 
   .room-grid {
     grid-template-columns: 1fr;
+  }
+
+  .results-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 }
 </style>

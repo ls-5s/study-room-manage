@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '@fontsource-variable/noto-sans-sc/index.css'
 import {
   ArrowRight,
   Calendar,

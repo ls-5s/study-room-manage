@@ -211,9 +211,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="users-page" aria-labelledby="users-title">
-    <header class="page-header">
-      <div>
+  <section class="users-page page-shell" aria-labelledby="users-title">
+    <header class="page-header page-hero">
+      <div class="page-hero-copy">
         <p class="page-eyebrow">管理员功能</p>
         <h1 id="users-title" class="page-title">用户管理</h1>
         <p class="page-summary">查询学生与管理员账号，查看脱敏资料并处理账号状态。</p>
@@ -249,7 +249,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <el-form class="filter-bar" :model="filters" @submit.prevent="search">
+    <el-form class="filter-bar toolbar-panel" :model="filters" @submit.prevent="search">
       <el-form-item label="学号">
         <el-input v-model="filters.studentNo" clearable placeholder="输入学号前缀" />
       </el-form-item>
@@ -544,34 +544,34 @@ onMounted(() => {
   display: grid;
   min-height: calc(100svh - 180px);
   align-content: start;
-  gap: 22px;
+  gap: 24px;
 }
 
 .page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
+  min-height: 190px;
 }
 
 .page-eyebrow {
   margin: 0 0 7px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .page-title {
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--text);
-  font-size: 1.85rem;
-  letter-spacing: -0.035em;
+  font-size: 3rem;
+  font-weight: 600;
+  letter-spacing: -0.045em;
 }
 
 .page-summary {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .page-actions {
@@ -593,29 +593,28 @@ onMounted(() => {
   gap: 6px;
   min-height: 104px;
   align-content: center;
-  padding: 18px 20px;
+  padding: 20px;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
 }
 
 .summary-card-primary {
   border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
-    var(--surface);
+  background: color-mix(in srgb, var(--accent-soft) 42%, var(--surface));
 }
 
 .summary-label {
   color: var(--text-muted);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .summary-value {
   color: var(--text);
-  font-size: 1.75rem;
+  font-size: 2rem;
+  font-weight: 500;
   line-height: 1.1;
 }
 
@@ -629,10 +628,10 @@ onMounted(() => {
   grid-template-columns: repeat(4, minmax(130px, 1fr)) auto;
   gap: 12px;
   align-items: end;
-  padding: 20px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .filter-bar :deep(.el-form-item) {
@@ -646,12 +645,12 @@ onMounted(() => {
 
 .native-filter-select {
   width: 100%;
-  height: 32px;
+  height: 38px;
   padding: 0 30px 0 11px;
-  border: 1px solid var(--el-border-color);
+  border: 1px solid var(--control-border);
   border-radius: var(--el-border-radius-base);
   color: var(--text);
-  background: var(--surface);
+  background: var(--surface-raised);
   font-size: 0.875rem;
 }
 
@@ -664,8 +663,8 @@ onMounted(() => {
 .table-panel {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
   box-shadow: var(--shadow-card);
 }
 

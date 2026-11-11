@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { initializeTheme } from './utils/theme'
+import '@fontsource-variable/noto-sans-sc/index.css'
 import 'element-plus/theme-chalk/base.css'
 // Programmatic APIs (ElMessage / ElMessageBox) are not resolved by unplugin-vue-components,
 // so their component styles must be imported explicitly; without them the message box renders

@@ -189,13 +189,24 @@ async function submit() {
 
 <style scoped>
 .register-card {
+  position: relative;
   width: min(100%, 760px);
   margin-inline: auto;
-  padding: 36px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface);
-  box-shadow: var(--shadow-raised);
+  overflow: hidden;
+  padding: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: 24px;
+  background: var(--glass-gradient);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(28px) saturate(118%);
+}
+
+.register-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 38%), transparent);
+  content: '';
 }
 
 .register-heading {
@@ -210,21 +221,24 @@ async function submit() {
   margin: 0 0 8px;
   color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
 }
 
 .register-title {
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.6rem, 4vw, 2.1rem);
-  letter-spacing: -0.03em;
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
 }
 
 .register-summary {
   margin: 10px 0 0;
   color: var(--text-secondary);
-  line-height: 1.65;
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .register-alert {
@@ -257,6 +271,7 @@ async function submit() {
 
 @media (max-width: 680px) {
   .register-card {
+    border-radius: 16px;
     padding: 28px 22px;
   }
 
@@ -266,6 +281,10 @@ async function submit() {
 
   .register-heading {
     flex-direction: column;
+  }
+
+  .register-title {
+    font-size: 1.875rem;
   }
 }
 </style>
