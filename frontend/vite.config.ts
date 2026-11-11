@@ -12,6 +12,9 @@ const apiProxy = {
 }
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ['qrcode', 'jsqr'],
+  },
   plugins: [
     vue(),
     AutoImport({

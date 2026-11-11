@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ArrowLeft, Calendar, Location, RefreshRight } from '@element-plus/icons-vue'
-import { computed, onMounted, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getSeatMap, getStudyRoom } from '../../api/study-room'
+import { getPublicSystemConfig } from '../../api/system'
 import SeatMap from '../../components/study-room/SeatMap.vue'
 import TimeSlotPicker from '../../components/study-room/TimeSlotPicker.vue'
 import type { SeatMapResult, SeatMapSeat, StudyRoomDetail, TimeSlot } from '../../types/study-room'
@@ -10,7 +11,7 @@ import { RequestError } from '../../utils/request'
 import {
   addDays,
   businessToday,
-  isPastSlot,
+  isSlotStarted,
   seatStatusLabels,
   seatStatusTagType,
 } from '../../utils/study-room'
@@ -19,7 +20,10 @@ const route = useRoute()
 const router = useRouter()
 const roomId = computed(() => String(route.params.id))
 const today = businessToday()
-const lastDate = addDays(today, 6)
+const bookingWindowDays = shallowRef(7)
+const lastDate = computed(() => addDays(today, bookingWindowDays.value - 1))
+const now = shallowRef(new Date())
+let clock: ReturnType<typeof setInterval> | undefined
 const date = shallowRef(today)
 const room = shallowRef<StudyRoomDetail | null>(null)
 const selectedSlot = shallowRef<TimeSlot | null>(null)
@@ -36,7 +40,7 @@ const disabledSlotIds = computed(
   () =>
     new Set(
       room.value?.timeSlots
-        .filter((slot) => isPastSlot(date.value, slot.endTime))
+        .filter((slot) => isSlotStarted(date.value, slot.startTime, now.value))
         .map((slot) => slot.id),
     ),
 )
@@ -74,8 +78,8 @@ async function loadSeats() {
 
 async function loadRoom() {
   const sequence = ++roomSequence
-  if (date.value < today || date.value > lastDate) {
-    roomError.value = `日期必须在 ${today} 至 ${lastDate} 之间`
+  if (date.value < today || date.value > lastDate.value) {
+    roomError.value = `日期必须在 ${today} 至 ${lastDate.value} 之间`
     return
   }
   loadingRoom.value = true
@@ -88,7 +92,10 @@ async function loadRoom() {
     const result = await getStudyRoom(roomId.value, date.value)
     if (sequence !== roomSequence) return
     room.value = result
-    const firstAvailable = result.timeSlots.find((slot) => !isPastSlot(date.value, slot.endTime))
+    now.value = new Date()
+    const firstAvailable = result.timeSlots.find(
+      (slot) => !isSlotStarted(date.value, slot.startTime, now.value),
+    )
     if (firstAvailable) {
       selectedSlot.value = firstAvailable
       await loadSeats()
@@ -112,6 +119,8 @@ function selectSeat(seat: SeatMapSeat) {
 
 function goToReservation() {
   if (!selectedSlot.value || !selectedSeat.value || !room.value) return
+  now.value = new Date()
+  if (disabledSlotIds.value.has(selectedSlot.value.id)) return
   void router.push({
     path: '/reservations/confirm',
     query: {
@@ -127,8 +136,21 @@ watch(date, () => {
   void loadRoom()
 })
 
-onMounted(() => {
-  void loadRoom()
+onMounted(async () => {
+  clock = setInterval(() => {
+    now.value = new Date()
+  }, 15_000)
+  try {
+    const config = await getPublicSystemConfig()
+    bookingWindowDays.value = config.bookingWindowDays
+  } catch {
+    bookingWindowDays.value = 7
+  }
+  await loadRoom()
+})
+
+onBeforeUnmount(() => {
+  if (clock) clearInterval(clock)
 })
 </script>
 
@@ -254,7 +276,11 @@ onMounted(() => {
             <span>尚未选择座位</span>
             <small>选择空闲座位后可前往预约确认。</small>
           </div>
-          <el-button type="primary" :disabled="!selectedSeat" @click="goToReservation">
+          <el-button
+            type="primary"
+            :disabled="!selectedSeat || !selectedSlot || disabledSlotIds.has(selectedSlot.id)"
+            @click="goToReservation"
+          >
             前往预约
           </el-button>
         </aside>

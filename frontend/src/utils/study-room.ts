@@ -64,10 +64,6 @@ export function addDays(date: string, days: number): string {
   ].join('-')
 }
 
-export function isPastSlot(date: string, endTime: string): boolean {
-  const today = businessToday()
-  if (date !== today) return false
-  const now = new Date()
-  const current = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-  return endTime <= current
+export function isSlotStarted(date: string, startTime: string, now = new Date()): boolean {
+  return new Date(`${date}T${startTime.slice(0, 5)}:00+08:00`).getTime() <= now.getTime()
 }

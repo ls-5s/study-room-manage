@@ -263,7 +263,8 @@ function resetMineFilters() {
 }
 
 function changeTab(name: string | number) {
-  if (name === 'mine') void loadMine()
+  activeTab.value = name === 'mine' ? 'mine' : 'submit'
+  if (activeTab.value === 'mine') void loadMine()
 }
 
 async function openDetail(ticket: FeedbackSummary | StudentFeedbackDetail) {

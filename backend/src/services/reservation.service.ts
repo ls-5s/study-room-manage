@@ -145,10 +145,6 @@ function uniqueReservationError(error: unknown): 'seat' | 'idempotency' | null {
   return null;
 }
 
-function windowRangeOverlaps(startAt: Date, endAt: Date) {
-  return { [Op.lt]: endAt, [Op.gt]: startAt };
-}
-
 export class ReservationService {
   private readonly now: () => Date;
   private readonly logger: Logger | undefined;
@@ -297,7 +293,8 @@ export class ReservationService {
           where: {
             seat_id: seat.id,
             status: { [Op.in]: [...ACTIVE_RESERVATION_STATUSES] },
-            start_at: windowRangeOverlaps(window.startAt, window.endAt),
+            start_at: { [Op.lt]: window.endAt },
+            end_at: { [Op.gt]: window.startAt },
           },
           transaction,
         });
@@ -307,7 +304,8 @@ export class ReservationService {
           where: {
             user_id: user.id,
             status: { [Op.in]: [...ACTIVE_RESERVATION_STATUSES] },
-            start_at: windowRangeOverlaps(window.startAt, window.endAt),
+            start_at: { [Op.lt]: window.endAt },
+            end_at: { [Op.gt]: window.startAt },
           },
           transaction,
         });

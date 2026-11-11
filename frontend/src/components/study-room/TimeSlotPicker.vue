@@ -27,7 +27,7 @@ const emit = defineEmits<{
     >
       <span>{{ slot.label }}</span>
       <strong>{{ slot.startTime }}–{{ slot.endTime }}</strong>
-      <small v-if="disabledIds.has(slot.id)">已结束</small>
+      <small v-if="disabledIds.has(slot.id)">已开始，不可预约</small>
     </button>
   </div>
 </template>
