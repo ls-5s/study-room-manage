@@ -7,6 +7,7 @@ import { createStudyRoomController } from '../controllers/study-room.controller.
 import { createReservationController } from '../controllers/reservation.controller.js';
 import { createCheckInController } from '../controllers/check-in.controller.js';
 import { createViolationController } from '../controllers/violation.controller.js';
+import { createFeedbackController } from '../controllers/feedback.controller.js';
 import { createUserRateLimiter } from '../lib/user-rate-limit.js';
 import type { Logger } from '../lib/logger.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -16,6 +17,7 @@ import { createAuthenticationModels } from '../models/index.js';
 import { createStudyRoomModels } from '../models/study-room-models.js';
 import { createReservationModels } from '../models/reservation-models.js';
 import { createViolationModels } from '../models/violation-models.js';
+import { createFeedbackModels } from '../models/feedback-models.js';
 import { ReservationStateJob } from '../jobs/reservation-state.job.js';
 import { AuthService } from '../services/auth.service.js';
 import { SessionService } from '../services/session.service.js';
@@ -27,10 +29,12 @@ import { CheckInService } from '../services/check-in.service.js';
 import { CheckInCodeService } from '../services/check-in-code.service.js';
 import { SettingsService } from '../services/settings.service.js';
 import { ViolationService } from '../services/violation.service.js';
+import { FeedbackService } from '../services/feedback.service.js';
 import { createAdminRoomRouter } from './admin-room.routes.js';
 import { createAdminReservationRouter } from './admin-reservation.routes.js';
 import { createReservationRouter } from './reservation.routes.js';
 import { createViolationRouter } from './violation.routes.js';
+import { createFeedbackRouter } from './feedback.routes.js';
 import { createStudyRoomRouter } from './study-room.routes.js';
 import { createAuthRouter } from './auth.routes.js';
 import { createSystemRouter } from './system.routes.js';
@@ -84,6 +88,15 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
   const violationService = new ViolationService(violationModels, settingsService, {
     logger: dependencies.logger,
   });
+  const feedbackModels = createFeedbackModels(dependencies.database.sequelize, {
+    User: models.User,
+    StudyRoom: studyRoomModels.StudyRoom,
+    Seat: studyRoomModels.Seat,
+    AuditLog: models.AuditLog,
+  });
+  const feedbackService = new FeedbackService(feedbackModels, {
+    logger: dependencies.logger,
+  });
 
   const reservationService = new ReservationService(reservationModels, {
     logger: dependencies.logger,
@@ -104,7 +117,9 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
   const reservationController = createReservationController(reservationService);
   const checkInController = createCheckInController(checkInService, checkInCodeService);
   const violationController = createViolationController(violationService);
+  const feedbackController = createFeedbackController(feedbackService);
   const authenticateUser = authenticate(sessions);
+  const requireStudent = requireRole('student');
   const requireAdmin = requireRole('admin', 'super_admin');
   const adminRoomDependencies = {
     controller: studyRoomController,
@@ -151,6 +166,16 @@ export function createApiRouter(dependencies: ApiRouteDependencies): ApiRouter {
       controller: violationController,
       authenticate: authenticateUser,
       requireAdmin,
+    }),
+  );
+  router.use(
+    createFeedbackRouter({
+      controller: feedbackController,
+      authenticate: authenticateUser,
+      requireStudent,
+      requireAdmin,
+      minuteLimiter: createUserRateLimiter({ limit: 3, windowMs: 60_000 }),
+      hourLimiter: createUserRateLimiter({ limit: 10, windowMs: 60 * 60_000 }),
     }),
   );
   return { router, reservationJob };

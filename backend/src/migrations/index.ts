@@ -8,6 +8,7 @@ import { createReservationTablesMigration } from './006-create-reservation-table
 import { addRoomCheckInNonceMigration } from './007-add-room-check-in-nonce.js';
 import { createSystemSettingsMigration } from './008-create-system-settings.js';
 import { createViolationsMigration } from './009-create-violations.js';
+import { createFeedbackTicketsMigration } from './010-create-feedback-tickets.js';
 import type { Migration } from './types.js';
 import type { MigrationSqlExecutor } from './types.js';
 
@@ -21,6 +22,7 @@ export const migrations: readonly Migration[] = [
   addRoomCheckInNonceMigration,
   createSystemSettingsMigration,
   createViolationsMigration,
+  createFeedbackTicketsMigration,
 ];
 
 export async function runMigrations(
