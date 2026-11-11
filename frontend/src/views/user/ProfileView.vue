@@ -2,7 +2,7 @@
 import { Calendar, Key, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, shallowRef } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import PasswordForm from '../../components/account/PasswordForm.vue'
 import ProfileForm from '../../components/account/ProfileForm.vue'
 import { changeCurrentPassword, getCurrentUser, updateCurrentUser } from '../../api/user'
@@ -142,6 +142,7 @@ onMounted(() => {
         <div class="summary-item">
           <span class="summary-label">有效违约</span>
           <strong>{{ profile.violationCount }} 次</strong>
+          <RouterLink class="summary-link" to="/violations">查看违约记录</RouterLink>
         </div>
         <div class="summary-item">
           <span class="summary-label">预约权限</span>
@@ -322,6 +323,18 @@ onMounted(() => {
   margin-bottom: 7px;
   color: var(--text-muted);
   font-size: 0.75rem;
+}
+
+.summary-link {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.summary-link:hover {
+  text-decoration: underline;
 }
 
 .summary-item strong {
