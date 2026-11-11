@@ -1,19 +1,210 @@
 <script setup lang="ts">
-import FeatureOverview from '../../components/FeatureOverview.vue'
+import { RefreshRight } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { onMounted, reactive, shallowRef, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { cancelReservation, listMyReservations } from '../../api/reservation'
+import ReservationCard from '../../components/reservation/ReservationCard.vue'
+import type { ReservationStatus, ReservationSummary } from '../../types/reservation'
+import { RequestError } from '../../utils/request'
+import { reservationStatusOptions } from '../../utils/reservation'
 
-const responsibilities = [
-  '按待签到、已签到、已完成、已取消和已失约筛选本人预约。',
-  '展示预约时间、自习室、座位号和当前状态。',
-  '为待签到预约提供签到窗口说明和有效操作入口。',
-  '保留分页与筛选条件，并根据状态限制取消或签到操作。',
-] as const
+const router = useRouter()
+const filters = reactive({
+  status: '' as ReservationStatus | '',
+  dates: [] as string[],
+  page: 1,
+  pageSize: 6,
+})
+const items = shallowRef<ReservationSummary[]>([])
+const total = shallowRef(0)
+const loading = shallowRef(false)
+const error = shallowRef('')
+let sequence = 0
+
+async function load() {
+  const current = ++sequence
+  loading.value = true
+  error.value = ''
+  try {
+    const result = await listMyReservations({
+      status: filters.status,
+      dateFrom: filters.dates[0],
+      dateTo: filters.dates[1],
+      page: filters.page,
+      pageSize: filters.pageSize,
+    })
+    if (current !== sequence) return
+    items.value = result.items
+    total.value = result.total
+  } catch (cause) {
+    if (current !== sequence) return
+    items.value = []
+    total.value = 0
+    error.value = cause instanceof RequestError ? cause.message : '预约列表加载失败'
+  } finally {
+    if (current === sequence) loading.value = false
+  }
+}
+
+function reloadFromFirstPage() {
+  filters.page = 1
+  void load()
+}
+
+function openDetail(id: string) {
+  void router.push(`/reservations/${id}`)
+}
+
+async function cancel(reservation: ReservationSummary) {
+  try {
+    const { value } = await ElMessageBox.prompt(
+      `确定取消 ${reservation.reserveDate} ${reservation.roomName} 座位 ${reservation.seatNo} 的预约吗？`,
+      '取消预约',
+      {
+        confirmButtonText: '确认取消',
+        cancelButtonText: '返回',
+        inputPlaceholder: '取消原因（可选）',
+        inputValidator: () => true,
+      },
+    )
+    await cancelReservation(reservation.id, value ?? '')
+    ElMessage.success('预约已取消')
+    await load()
+  } catch (cause) {
+    if (cause === 'cancel' || cause === 'close') return
+    ElMessage.error(cause instanceof RequestError ? cause.message : '取消预约失败')
+  }
+}
+
+watch(
+  () => [filters.status, filters.dates],
+  () => reloadFromFirstPage(),
+  { deep: true },
+)
+
+onMounted(() => {
+  void load()
+})
 </script>
 
 <template>
-  <FeatureOverview
-    eyebrow="学生服务 / 预约"
-    summary="我的预约页帮助学生持续追踪每一笔预约从创建到签到、完成或取消的当前状态。"
-    :responsibilities="responsibilities"
-    status="预约列表骨架已建立；状态筛选、分页和操作按钮将在预约与签到模块中接入。"
-  />
+  <section class="reservation-page">
+    <header class="page-header">
+      <div>
+        <p class="page-eyebrow">学生服务 / 预约</p>
+        <h1>我的预约</h1>
+        <p class="page-note">查看预约状态与签到窗口，预约开始前可以自行取消。</p>
+      </div>
+      <el-button :icon="RefreshRight" :loading="loading" @click="load">刷新</el-button>
+    </header>
+
+    <el-form class="filter-panel" @submit.prevent="reloadFromFirstPage">
+      <el-form-item label="状态">
+        <el-radio-group v-model="filters.status">
+          <el-radio-button value="">全部</el-radio-button>
+          <el-radio-button
+            v-for="option in reservationStatusOptions"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </el-radio-button>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="日期范围">
+        <el-date-picker
+          v-model="filters.dates"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          start-placeholder="开始日期"
+          end-placeholder="结束日期"
+          :clearable="true"
+        />
+      </el-form-item>
+    </el-form>
+
+    <el-alert v-if="error" type="error" :title="error" :closable="false" show-icon>
+      <template #default>
+        <el-button link type="primary" @click="load">重试</el-button>
+      </template>
+    </el-alert>
+
+    <div v-loading="loading" class="list-body">
+      <div v-if="items.length" class="card-grid">
+        <ReservationCard
+          v-for="item in items"
+          :key="item.id"
+          :reservation="item"
+          @detail="openDetail"
+          @cancel="cancel"
+          @checkin="openDetail"
+        />
+      </div>
+      <el-empty v-else-if="!loading" :image-size="90" description="暂无符合条件的预约" />
+    </div>
+
+    <el-pagination
+      v-model:current-page="filters.page"
+      :page-size="filters.pageSize"
+      :total="total"
+      layout="total, prev, pager, next"
+      background
+      @current-change="load"
+    />
+  </section>
 </template>
+
+<style scoped>
+.reservation-page {
+  display: grid;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+}
+
+.page-note {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.list-body {
+  min-height: 220px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+</style>
