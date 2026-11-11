@@ -1,6 +1,6 @@
 # 校园自习室预约管理系统模块文档
 
-> 文档版本：V1.4  
+> 文档版本：V1.5  
 > 更新日期：2026-11-11  
 > 上位文档：[校园自习室预约管理系统开发文档](../校园自习室预约管理系统开发文档.md)
 
@@ -271,3 +271,13 @@
 3. 签到码接口迁到 `/admin/check-in-codes`，与 M02 的 `/admin/study-rooms` 前缀解耦；新增管理员人工核验签到通道，`check_ins.method` 扩展为 `qr`、`manual`。
 4. 明确失约不释放该时段、业务流程只按 `reserve_date` 归属、`nonce` 不是一次性凭据。
 5. 预约创建增加 `Idempotency-Key`，取消与创建补用户锁，资源交叉归属不一致统一返回 422。
+
+## 14. V1.5 修订说明
+
+本轮实现 M04 违约管理，并同步 M03、M07 的跨模块契约：
+
+1. 新增 `system_settings`（迁移 `008`，属 M07）与 `violations`（迁移 `009`），违约阈值和限制天数改为可配置。
+2. 违约写入使用 `createFromNoShow(reservationId, transaction)`：由预约任务的事务持有提交权，避免与已持有的用户行锁互等。
+3. 预约资格（限制期）通过 `ReservationPolicyPort` 交由 M04 判断，M03 不再内联读取 `restriction_until`。
+4. `occurred_at` 固定取预约的 `check_in_deadline`；限制区间延长时保留原开始时间、只取较大的截止时间。
+5. 学生“我的违约”、管理员“违约管理”页面替换骨架，支持带原因撤销与规则配置。
