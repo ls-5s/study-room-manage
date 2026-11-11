@@ -6,6 +6,7 @@ import {
   DataLine,
   HomeFilled,
   School,
+  Setting,
   Tickets,
   User,
   Warning,
@@ -74,6 +75,7 @@ const navigationGroups = computed<readonly NavigationGroup[]>(() => {
           { path: '/admin/violations', label: '违约管理', icon: Warning },
           { path: '/admin/feedback', label: '反馈处理', icon: ChatDotRound },
           { path: '/admin/reports', label: '统计报表', icon: DataAnalysis },
+          { path: '/admin/system', label: '系统运维', icon: Setting },
         ],
       },
     ]

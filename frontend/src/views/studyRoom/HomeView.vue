@@ -2,6 +2,7 @@
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import { computed, onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
 import { getStudyRooms } from '../../api/study-room'
+import { getPublicSystemConfig } from '../../api/system'
 import RoomCard from '../../components/study-room/RoomCard.vue'
 import type { StudyRoomListQuery, StudyRoomSummary } from '../../types/study-room'
 import { RequestError } from '../../utils/request'
@@ -20,10 +21,11 @@ const total = shallowRef(0)
 const loading = shallowRef(false)
 const error = shallowRef('')
 const filterError = shallowRef('')
+const bookingWindowDays = shallowRef(7)
 let controller: AbortController | null = null
 
 const today = businessToday()
-const lastDate = addDays(today, 6)
+const lastDate = computed(() => addDays(today, bookingWindowDays.value - 1))
 const hasTimeFilter = computed(() => Boolean(filters.date || filters.startTime || filters.endTime))
 
 async function loadRooms() {
@@ -63,8 +65,8 @@ function validateFilters(): boolean {
     filterError.value = '结束时间必须晚于开始时间。'
     return false
   }
-  if (filters.date && (filters.date < today || filters.date > lastDate)) {
-    filterError.value = `日期必须在 ${today} 至 ${lastDate} 之间。`
+  if (filters.date && (filters.date < today || filters.date > lastDate.value)) {
+    filterError.value = `日期必须在 ${today} 至 ${lastDate.value} 之间。`
     return false
   }
   return true
@@ -92,6 +94,13 @@ function changePage(page: number) {
 }
 
 onMounted(() => {
+  void getPublicSystemConfig()
+    .then((config) => {
+      bookingWindowDays.value = config.bookingWindowDays
+    })
+    .catch(() => {
+      bookingWindowDays.value = 7
+    })
   void loadRooms()
 })
 

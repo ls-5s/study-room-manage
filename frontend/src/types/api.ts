@@ -14,7 +14,7 @@ export type ApiResponse<T> =
   | {
       code: ErrorCode
       message: string
-      data: { fields?: Record<string, string> } | null
+      data: { fields?: Record<string, string>; requestId?: string } | null
     }
 
 export interface Paginated<T> {

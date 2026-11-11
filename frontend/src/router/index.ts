@@ -9,6 +9,7 @@ import { statisticsRoutes } from './modules/statistics.routes'
 import { studyRoomRoutes } from './modules/study-room.routes'
 import { userRoutes } from './modules/user.routes'
 import { violationRoutes } from './modules/violation.routes'
+import { systemRoutes } from './modules/system.routes'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -27,6 +28,7 @@ export const routes: RouteRecordRaw[] = [
       ...violationRoutes,
       ...feedbackRoutes,
       ...statisticsRoutes,
+      ...systemRoutes,
       {
         path: '403',
         name: 'forbidden',

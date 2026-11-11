@@ -21,6 +21,7 @@ export class RequestError extends Error {
   readonly businessCode: ErrorCode | string | undefined
   readonly fields: Record<string, string>
   readonly retryAfterSeconds: number | null
+  readonly requestId: string | null
 
   constructor(
     kind: RequestErrorKind,
@@ -30,6 +31,7 @@ export class RequestError extends Error {
       businessCode?: string
       fields?: Record<string, string>
       retryAfterSeconds?: number | null
+      requestId?: string | null
     } = {},
   ) {
     super(details.message ?? defaultMessages[kind])
@@ -39,6 +41,7 @@ export class RequestError extends Error {
     this.businessCode = details.businessCode
     this.fields = details.fields ?? {}
     this.retryAfterSeconds = details.retryAfterSeconds ?? null
+    this.requestId = details.requestId ?? null
   }
 }
 
@@ -66,6 +69,12 @@ function retryAfter(response: AxiosResponse<unknown>): number | null {
   return Number.isFinite(value) && value > 0 ? Math.ceil(value) : null
 }
 
+function requestIdFromHeader(response: AxiosResponse<unknown>): string | null {
+  const raw = response.headers['x-request-id']
+  const value = Array.isArray(raw) ? raw[0] : raw
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
 async function responseBody(value: unknown): Promise<unknown> {
   if (!(value instanceof Blob)) return value
   try {
@@ -86,9 +95,13 @@ async function httpFailure(response: AxiosResponse<unknown>): Promise<RequestErr
       businessCode: body.code,
       ...(fields ? { fields } : {}),
       retryAfterSeconds: retryAfter(response),
+      requestId: body.data?.requestId ?? requestIdFromHeader(response),
     })
   }
-  return new RequestError('http', { httpStatus: response.status })
+  return new RequestError('http', {
+    httpStatus: response.status,
+    requestId: requestIdFromHeader(response),
+  })
 }
 
 async function normalizeFailure(error: unknown): Promise<RequestError> {
@@ -133,6 +146,7 @@ request.interceptors.response.use(
         businessCode: response.data.code,
         ...(fields ? { fields } : {}),
         retryAfterSeconds: retryAfter(response),
+        requestId: response.data.data?.requestId ?? requestIdFromHeader(response),
       })
     }
     return response
