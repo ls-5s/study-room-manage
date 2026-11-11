@@ -1,19 +1,515 @@
 <script setup lang="ts">
-import FeatureOverview from '../../components/FeatureOverview.vue'
+import { ArrowLeft, Calendar, Location, RefreshRight } from '@element-plus/icons-vue'
+import { computed, onMounted, shallowRef, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { getSeatMap, getStudyRoom } from '../../api/study-room'
+import SeatMap from '../../components/study-room/SeatMap.vue'
+import TimeSlotPicker from '../../components/study-room/TimeSlotPicker.vue'
+import type { SeatMapResult, SeatMapSeat, StudyRoomDetail, TimeSlot } from '../../types/study-room'
+import { RequestError } from '../../utils/request'
+import {
+  addDays,
+  businessToday,
+  isPastSlot,
+  seatStatusLabels,
+  seatStatusTagType,
+} from '../../utils/study-room'
 
-const responsibilities = [
-  '展示自习室基础信息、位置、开放状态和开放时段。',
-  '按日期和时段展示座位平面图，并标记空闲、已预约、维修和停用。',
-  '提供座位图例与选中座位摘要，避免只靠颜色传达状态。',
-  '将有效选择带入预约确认流程，最终可用性以服务端创建结果为准。',
-] as const
+const route = useRoute()
+const router = useRouter()
+const roomId = computed(() => String(route.params.id))
+const today = businessToday()
+const lastDate = addDays(today, 6)
+const date = shallowRef(today)
+const room = shallowRef<StudyRoomDetail | null>(null)
+const selectedSlot = shallowRef<TimeSlot | null>(null)
+const seatMap = shallowRef<SeatMapResult | null>(null)
+const selectedSeat = shallowRef<SeatMapSeat | null>(null)
+const loadingRoom = shallowRef(false)
+const loadingSeats = shallowRef(false)
+const roomError = shallowRef('')
+const seatError = shallowRef('')
+let roomSequence = 0
+let seatSequence = 0
+
+const disabledSlotIds = computed(
+  () =>
+    new Set(
+      room.value?.timeSlots
+        .filter((slot) => isPastSlot(date.value, slot.endTime))
+        .map((slot) => slot.id),
+    ),
+)
+
+const legend = computed(() =>
+  (['available', 'reserved', 'maintenance', 'disabled'] as const).map((status) => ({
+    status,
+    label: seatStatusLabels[status],
+    tagType: seatStatusTagType(status),
+  })),
+)
+
+async function loadSeats() {
+  const slot = selectedSlot.value
+  if (!slot) {
+    seatMap.value = null
+    selectedSeat.value = null
+    return
+  }
+  const sequence = ++seatSequence
+  loadingSeats.value = true
+  seatError.value = ''
+  selectedSeat.value = null
+  try {
+    const result = await getSeatMap(roomId.value, date.value, slot.id)
+    if (sequence === seatSequence) seatMap.value = result
+  } catch (cause) {
+    if (sequence !== seatSequence) return
+    seatMap.value = null
+    seatError.value = cause instanceof RequestError ? cause.message : '座位图加载失败'
+  } finally {
+    if (sequence === seatSequence) loadingSeats.value = false
+  }
+}
+
+async function loadRoom() {
+  const sequence = ++roomSequence
+  if (date.value < today || date.value > lastDate) {
+    roomError.value = `日期必须在 ${today} 至 ${lastDate} 之间`
+    return
+  }
+  loadingRoom.value = true
+  roomError.value = ''
+  room.value = null
+  seatMap.value = null
+  selectedSlot.value = null
+  selectedSeat.value = null
+  try {
+    const result = await getStudyRoom(roomId.value, date.value)
+    if (sequence !== roomSequence) return
+    room.value = result
+    const firstAvailable = result.timeSlots.find((slot) => !isPastSlot(date.value, slot.endTime))
+    if (firstAvailable) {
+      selectedSlot.value = firstAvailable
+      await loadSeats()
+    }
+  } catch (cause) {
+    if (sequence !== roomSequence) return
+    roomError.value = cause instanceof RequestError ? cause.message : '自习室详情加载失败'
+  } finally {
+    if (sequence === roomSequence) loadingRoom.value = false
+  }
+}
+
+function selectSlot(slot: TimeSlot) {
+  selectedSlot.value = slot
+  void loadSeats()
+}
+
+function selectSeat(seat: SeatMapSeat) {
+  selectedSeat.value = seat
+}
+
+function goToReservation() {
+  if (!selectedSlot.value || !selectedSeat.value || !room.value) return
+  void router.push({
+    path: '/reservations/confirm',
+    query: {
+      roomId: room.value.id,
+      slotId: selectedSlot.value.id,
+      seatId: selectedSeat.value.id,
+      date: date.value,
+    },
+  })
+}
+
+watch(date, () => {
+  void loadRoom()
+})
+
+onMounted(() => {
+  void loadRoom()
+})
 </script>
 
 <template>
-  <FeatureOverview
-    eyebrow="学生服务 / 自习室"
-    summary="详情页把抽象余量转换成可视化座位图，让学生确认具体座位位置后发起预约。"
-    :responsibilities="responsibilities"
-    status="详情页骨架已建立；开放时段、座位图和预约入口将在自习室与预约模块中接入。"
-  />
+  <section class="detail-page" aria-labelledby="room-title">
+    <RouterLink class="back-link" to="/home">
+      <el-icon><ArrowLeft /></el-icon>
+      返回自习室列表
+    </RouterLink>
+
+    <el-alert v-if="roomError" type="error" :title="roomError" :closable="false" show-icon>
+      <template #default>
+        <el-button link type="primary" @click="loadRoom">重新加载</el-button>
+      </template>
+    </el-alert>
+
+    <div v-loading="loadingRoom" class="detail-loading">
+      <template v-if="room">
+        <header class="room-header">
+          <div>
+            <p class="page-eyebrow">自习室详情</p>
+            <h1 id="room-title">{{ room.name }}</h1>
+            <p class="room-meta">
+              <span
+                ><el-icon><Location /></el-icon>{{ room.location }}</span
+              >
+              <span
+                ><el-icon><Calendar /></el-icon>{{ date }}</span
+              >
+              <span>{{ room.grid.rows }} 行 × {{ room.grid.columns }} 列</span>
+            </p>
+          </div>
+          <div class="hero-count">
+            <span>静态可预约</span>
+            <strong>{{ room.bookableSeatCount }}</strong>
+            <small>/ {{ room.seatCount }} 座</small>
+          </div>
+        </header>
+
+        <p class="room-description">{{ room.description || '暂无使用说明' }}</p>
+
+        <section class="control-section" aria-labelledby="date-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="date-title">选择日期与时段</h2>
+              <p>日期变化后会重新读取当天有效时段。</p>
+            </div>
+            <el-date-picker
+              v-model="date"
+              type="date"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
+              :clearable="false"
+            />
+          </div>
+          <TimeSlotPicker
+            v-if="room.timeSlots.length"
+            :slots="room.timeSlots"
+            :selected-id="selectedSlot?.id ?? ''"
+            :disabled-ids="disabledSlotIds"
+            @select="selectSlot"
+          />
+          <el-empty v-else :image-size="72" description="该日期暂无有效开放时段" />
+        </section>
+
+        <section class="seat-section" aria-labelledby="seat-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="seat-title">座位平面图</h2>
+              <p v-if="selectedSlot">
+                {{ selectedSlot.label }} · {{ selectedSlot.startTime }}–{{ selectedSlot.endTime }}
+              </p>
+              <p v-else>先选择开放时段</p>
+            </div>
+            <el-button
+              v-if="selectedSlot"
+              :icon="RefreshRight"
+              :loading="loadingSeats"
+              @click="loadSeats"
+            >
+              刷新座位
+            </el-button>
+          </div>
+
+          <div class="legend" aria-label="座位状态图例">
+            <span v-for="item in legend" :key="item.status">
+              <i :class="`legend-${item.status}`" aria-hidden="true" />
+              {{ item.label }}
+            </span>
+          </div>
+
+          <el-alert v-if="seatError" type="error" :title="seatError" :closable="false" show-icon />
+          <div v-loading="loadingSeats" class="seat-content">
+            <SeatMap
+              v-if="seatMap"
+              :grid="room.grid"
+              :seats="seatMap.seats"
+              :selected-id="selectedSeat?.id ?? ''"
+              @select="selectSeat"
+            />
+            <el-empty
+              v-else-if="selectedSlot && !loadingSeats && !seatError"
+              :image-size="80"
+              description="当前时段暂无座位数据"
+            />
+          </div>
+        </section>
+
+        <aside class="selection-bar">
+          <div v-if="selectedSeat && selectedSlot">
+            <span>已选择</span>
+            <strong>{{ selectedSeat.seatNo }}</strong>
+            <el-tag :type="seatStatusTagType(selectedSeat.status)" effect="plain">
+              {{ seatStatusLabels[selectedSeat.status] }}
+            </el-tag>
+            <small
+              >{{ room.name }} · {{ date }} {{ selectedSlot.startTime }}–{{
+                selectedSlot.endTime
+              }}</small
+            >
+          </div>
+          <div v-else class="selection-empty">
+            <span>尚未选择座位</span>
+            <small>选择空闲座位后可前往预约确认。</small>
+          </div>
+          <el-button type="primary" :disabled="!selectedSeat" @click="goToReservation">
+            前往预约
+          </el-button>
+        </aside>
+      </template>
+    </div>
+  </section>
 </template>
+
+<style scoped>
+.detail-page {
+  display: grid;
+  gap: 20px;
+  min-height: 70svh;
+  padding-bottom: 86px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+.detail-loading {
+  display: grid;
+  gap: 20px;
+  min-height: 500px;
+}
+
+.room-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--surface), var(--accent-soft));
+}
+
+.page-eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.room-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+
+.room-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.room-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hero-count {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.hero-count span {
+  margin-right: 5px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.hero-count strong {
+  color: var(--text);
+  font-size: 2.2rem;
+}
+
+.hero-count small {
+  color: var(--text-muted);
+}
+
+.room-description {
+  margin: -6px 2px 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.control-section,
+.seat-section {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.section-heading p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend i {
+  width: 13px;
+  height: 13px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.legend-available {
+  border-color: var(--status-ok-border) !important;
+  background: var(--status-ok-tint);
+}
+
+.legend-reserved {
+  border-color: var(--status-warn-border) !important;
+  background: var(--status-warn-tint);
+}
+
+.legend-maintenance {
+  border-color: var(--status-info-border) !important;
+  background: var(--status-info-tint);
+}
+
+.legend-disabled {
+  border-color: var(--status-bad-border) !important;
+  background: var(--status-bad-tint);
+}
+
+.seat-content {
+  min-height: 180px;
+}
+
+.selection-bar {
+  position: fixed;
+  z-index: 9;
+  right: clamp(20px, 2.5vw, 40px);
+  bottom: 18px;
+  left: calc(232px + clamp(20px, 2.5vw, 40px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  background: var(--topbar-surface);
+  box-shadow: var(--shadow-raised);
+  backdrop-filter: blur(14px);
+}
+
+.selection-bar > div:first-child {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.selection-bar span,
+.selection-bar small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.selection-bar strong {
+  color: var(--text);
+}
+
+.selection-empty {
+  display: grid;
+  gap: 3px;
+}
+
+@media (max-width: 900px) {
+  .selection-bar {
+    right: 24px;
+    left: 24px;
+  }
+}
+
+@media (max-width: 650px) {
+  .room-header,
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-count {
+    width: 100%;
+  }
+
+  .control-section,
+  .seat-section {
+    padding: 18px 14px;
+  }
+
+  .selection-bar {
+    right: 12px;
+    bottom: 10px;
+    left: 12px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .selection-bar .el-button {
+    width: 100%;
+  }
+}
+</style>
