@@ -42,14 +42,15 @@ export function createApp(dependencies: AppDependencies) {
     }),
   );
   app.use(express.json({ limit: '1mb' }));
-  app.use(
-    '/api/v1',
-    createApiRouter({
-      probeDatabase: dependencies.database.probe,
-      database: dependencies.database,
-      auth: dependencies.auth,
-    }),
-  );
+  const api = createApiRouter({
+    probeDatabase: dependencies.database.probe,
+    database: dependencies.database,
+    auth: dependencies.auth,
+    logger,
+  });
+  app.use('/api/v1', api.router);
+  // The HTTP server owns the lifecycle of background jobs; the app only exposes them.
+  app.locals.reservationJob = api.reservationJob;
 
   app.use(notFound);
   app.use(errorHandler(logger));

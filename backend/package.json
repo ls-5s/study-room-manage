@@ -19,7 +19,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "admin:seed": "tsx scripts/seed-admin.ts",
     "db:seed:rooms": "tsx scripts/seed-study-rooms.ts",
-    "test": "tsx --test test/study-room.unit.test.ts",
+    "test": "tsx --test test/study-room.unit.test.ts test/reservation.unit.test.ts",
+    "jobs:reservation-state": "tsx scripts/run-reservation-job.ts",
     "sessions:cleanup": "tsx scripts/cleanup-sessions.ts"
   },
   "dependencies": {

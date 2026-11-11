@@ -4,6 +4,8 @@ import { createAuthTablesMigration } from './001-create-auth-tables.js';
 import { addSuperAdminRoleMigration } from './003-add-super-admin-role.js';
 import { createStudyRoomTablesMigration } from './004-create-study-room-tables.js';
 import { fixSeatBatchIndexMigration } from './005-fix-seat-batch-index.js';
+import { createReservationTablesMigration } from './006-create-reservation-tables.js';
+import { addRoomCheckInNonceMigration } from './007-add-room-check-in-nonce.js';
 import type { Migration } from './types.js';
 import type { MigrationSqlExecutor } from './types.js';
 
@@ -13,6 +15,8 @@ export const migrations: readonly Migration[] = [
   addSuperAdminRoleMigration,
   createStudyRoomTablesMigration,
   fixSeatBatchIndexMigration,
+  createReservationTablesMigration,
+  addRoomCheckInNonceMigration,
 ];
 
 export async function runMigrations(

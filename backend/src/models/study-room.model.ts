@@ -21,6 +21,7 @@ export class StudyRoom extends Model<
   declare grid_columns: number;
   declare status: StudyRoomStatus;
   declare bookable_from: string;
+  declare check_in_nonce: string | null;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
 }
@@ -40,6 +41,7 @@ export function initStudyRoomModel(sequelize: Sequelize) {
         defaultValue: 'closed',
       },
       bookable_from: { type: DataTypes.DATEONLY, allowNull: false },
+      check_in_nonce: { type: DataTypes.CHAR(36), allowNull: true },
       created_at: { type: DataTypes.DATE, allowNull: false },
       updated_at: { type: DataTypes.DATE, allowNull: false },
     },

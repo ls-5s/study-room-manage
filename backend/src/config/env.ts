@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
@@ -25,6 +26,8 @@ export interface AuthConfig {
   jwtSecret: string;
   tokenTtlSeconds: number;
   bcryptCost: number;
+  /** HMAC key for check-in codes; independent from the JWT secret. */
+  checkInSigningSecret: string;
 }
 
 export class ConfigurationError extends Error {
@@ -75,6 +78,19 @@ function origins(env: NodeJS.ProcessEnv): string[] {
   return [...new Set(values)];
 }
 
+function checkInSigningSecret(env: NodeJS.ProcessEnv, jwtSecret: string): string {
+  const configured = env.CHECK_IN_SIGNING_SECRET?.trim();
+  if (configured) {
+    if (Buffer.byteLength(configured, 'utf8') < 32) {
+      throw new ConfigurationError('CHECK_IN_SIGNING_SECRET');
+    }
+    return configured;
+  }
+  // Deriving keeps first-run local setups working while still separating the material used
+  // for check-in codes from the raw JWT secret.
+  return createHash('sha256').update(`${jwtSecret}:check-in-token`).digest('hex');
+}
+
 function authConfig(env: NodeJS.ProcessEnv): AuthConfig {
   const jwtSecret = required(env, 'JWT_SECRET', false);
   if (Buffer.byteLength(jwtSecret, 'utf8') < 32) {
@@ -96,6 +112,7 @@ function authConfig(env: NodeJS.ProcessEnv): AuthConfig {
     jwtSecret,
     tokenTtlSeconds,
     bcryptCost: integer(env, 'BCRYPT_COST', 12, 14),
+    checkInSigningSecret: checkInSigningSecret(env, jwtSecret),
   };
 }
 
