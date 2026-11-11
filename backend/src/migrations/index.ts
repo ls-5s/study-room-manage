@@ -2,6 +2,8 @@ import { QueryTypes, type Sequelize } from 'sequelize';
 import { createAuditLogsMigration } from './002-create-audit-logs.js';
 import { createAuthTablesMigration } from './001-create-auth-tables.js';
 import { addSuperAdminRoleMigration } from './003-add-super-admin-role.js';
+import { createStudyRoomTablesMigration } from './004-create-study-room-tables.js';
+import { fixSeatBatchIndexMigration } from './005-fix-seat-batch-index.js';
 import type { Migration } from './types.js';
 import type { MigrationSqlExecutor } from './types.js';
 
@@ -9,6 +11,8 @@ export const migrations: readonly Migration[] = [
   createAuthTablesMigration,
   createAuditLogsMigration,
   addSuperAdminRoleMigration,
+  createStudyRoomTablesMigration,
+  fixSeatBatchIndexMigration,
 ];
 
 export async function runMigrations(

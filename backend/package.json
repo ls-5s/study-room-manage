@@ -18,6 +18,8 @@
     "db:prepare": "tsx scripts/prepare-database.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "admin:seed": "tsx scripts/seed-admin.ts",
+    "db:seed:rooms": "tsx scripts/seed-study-rooms.ts",
+    "test": "tsx --test test/study-room.unit.test.ts",
     "sessions:cleanup": "tsx scripts/cleanup-sessions.ts"
   },
   "dependencies": {

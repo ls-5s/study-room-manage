@@ -7,9 +7,14 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requireRole } from '../middleware/authorize.js';
 import { verifyTokenOnly } from '../middleware/verify-token.js';
 import { createAuthenticationModels } from '../models/index.js';
+import { createStudyRoomModels } from '../models/study-room-models.js';
 import { AuthService } from '../services/auth.service.js';
 import { SessionService } from '../services/session.service.js';
+import { StudyRoomService } from '../services/study-room.service.js';
 import { UserService } from '../services/user.service.js';
+import { createStudyRoomController } from '../controllers/study-room.controller.js';
+import { createAdminRoomRouter } from './admin-room.routes.js';
+import { createStudyRoomRouter } from './study-room.routes.js';
 import { createAuthRouter } from './auth.routes.js';
 import { createSystemRouter } from './system.routes.js';
 import type { SystemRouteDependencies } from './system.routes.js';
@@ -35,6 +40,14 @@ export function createApiRouter(dependencies: ApiRouteDependencies) {
     dependencies.database.sequelize,
     dependencies.auth.bcryptCost,
   );
+  const studyRoomModels = createStudyRoomModels(dependencies.database.sequelize, models);
+  const studyRoomService = new StudyRoomService(studyRoomModels);
+  const studyRoomController = createStudyRoomController(studyRoomService);
+  const adminRoomDependencies = {
+    controller: studyRoomController,
+    authenticate: authenticate(sessions),
+    requireAdmin: requireRole('admin', 'super_admin'),
+  };
 
   router.use(createSystemRouter(dependencies));
   router.use(
@@ -51,5 +64,7 @@ export function createApiRouter(dependencies: ApiRouteDependencies) {
       requireSuperAdmin: requireRole('super_admin'),
     }),
   );
+  router.use(createStudyRoomRouter(studyRoomController));
+  router.use(createAdminRoomRouter(adminRoomDependencies));
   return router;
 }
