@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   Calendar,
+  Brush,
   ChatDotRound,
   DataAnalysis,
   DataLine,
@@ -76,6 +77,7 @@ const navigationGroups = computed<readonly NavigationGroup[]>(() => {
           { path: '/admin/feedback', label: '反馈处理', icon: ChatDotRound },
           { path: '/admin/reports', label: '统计报表', icon: DataAnalysis },
           { path: '/admin/system', label: '系统运维', icon: Setting },
+          { path: '/admin/design-system', label: '设计系统', icon: Brush },
         ],
       },
     ]
