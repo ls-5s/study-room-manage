@@ -175,7 +175,7 @@ def clear_runs(p):
 
 
 def add_inline(paragraph, text, size=12, bold=False, font=SONG):
-    tokens = re.split(r"(<sup>.*?</sup>|\*\*.*?\*\*)", text)
+    tokens = re.split(r"(<sup>.*?</sup>|\*\*.*?\*\*|`[^`]*`)", text)
     for tok in tokens:
         if not tok:
             continue
@@ -183,6 +183,9 @@ def add_inline(paragraph, text, size=12, bold=False, font=SONG):
             run = paragraph.add_run(tok[5:-6])
             set_font(run, font, max(size - 3, 8))
             run.font.superscript = True
+        elif tok.startswith("`") and tok.endswith("`") and len(tok) > 2:
+            run = paragraph.add_run(tok[1:-1])
+            set_font(run, font, size)
         elif tok.startswith("**") and tok.endswith("**") and len(tok) > 4:
             run = paragraph.add_run(tok[2:-2])
             set_font(run, font, size, True)
@@ -193,21 +196,61 @@ def add_inline(paragraph, text, size=12, bold=False, font=SONG):
 
 def three_line_table(doc, rows):
     cols = len(rows[0])
+    head = [c.strip() for c in rows[0]]
+    if head[:3] == ["字段名", "数据类型", "主键"]:
+        widths = [3.8, 3.4, 1.2, 1.2, 5.9]
+    else:
+        lens = []
+        for c in range(cols):
+            longest = max((len(r[c]) if c < len(r) else 0) for r in rows)
+            lens.append(max(longest, 3) ** 0.75)
+        total = sum(lens)
+        widths = [max(1.4, 15.5 * v / total) for v in lens]
+        scale = 15.5 / sum(widths)
+        widths = [w * scale for w in widths]
     table = doc.add_table(rows=len(rows), cols=cols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = True
+    for idx_w, wcm in enumerate(widths):
+        for cell in table.columns[idx_w].cells:
+            cell.width = Cm(wcm)
     tbl = table._tbl
     tblPr = tbl.tblPr
+
+    total_twips = int(Cm(15.5).twips)
+    tblW = tblPr.find(qn("w:tblW"))
+    if tblW is None:
+        tblW = OxmlElement("w:tblW")
+        tblPr.insert(0, tblW)
+    tblW.set(qn("w:w"), str(total_twips))
+    tblW.set(qn("w:type"), "dxa")
+
+    layout = tblPr.find(qn("w:tblLayout"))
+    if layout is None:
+        layout = OxmlElement("w:tblLayout")
+        tblPr.append(layout)
+    layout.set(qn("w:type"), "fixed")
+
+    margins = OxmlElement("w:tblCellMar")
+    for side in ("top", "bottom", "left", "right"):
+        el = OxmlElement("w:" + side)
+        el.set(qn("w:w"), "0")
+        el.set(qn("w:type"), "dxa")
+        margins.append(el)
+    tblPr.append(margins)
+
+    grid = tbl.find(qn("w:tblGrid"))
+    if grid is not None:
+        cols_el = grid.findall(qn("w:gridCol"))
+        for idx_w, wcm in enumerate(widths[:len(cols_el)]):
+            cols_el[idx_w].set(qn("w:w"), str(int(Cm(wcm).twips)))
+
     borders = OxmlElement("w:tblBorders")
-    for edge, sz in (("top", 12), ("bottom", 12)):
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
         el = OxmlElement(f"w:{edge}")
         el.set(qn("w:val"), "single")
-        el.set(qn("w:sz"), str(sz))
+        el.set(qn("w:sz"), "4")
         el.set(qn("w:color"), "000000")
-        borders.append(el)
-    for edge in ("left", "right", "insideH", "insideV"):
-        el = OxmlElement(f"w:{edge}")
-        el.set(qn("w:val"), "none")
         borders.append(el)
     tblPr.append(borders)
 
@@ -216,19 +259,19 @@ def three_line_table(doc, rows):
             cell = table.cell(i, j)
             cell.text = ""
             p = cell.paragraphs[0]
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER if i == 0 else WD_ALIGN_PARAGRAPH.LEFT
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.first_line_indent = Pt(0)
             p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-            p.paragraph_format.space_before = Pt(2)
-            p.paragraph_format.space_after = Pt(2)
-            add_inline(p, cell_text, size=10.5, bold=(i == 0))
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            add_inline(p, cell_text, size=10.5)
         if i == 0:
             for cell in table.rows[0].cells:
                 tcPr = cell._tc.get_or_add_tcPr()
                 tcB = OxmlElement("w:tcBorders")
                 bottom = OxmlElement("w:bottom")
                 bottom.set(qn("w:val"), "single")
-                bottom.set(qn("w:sz"), "8")
+                bottom.set(qn("w:sz"), "4")
                 bottom.set(qn("w:color"), "000000")
                 tcB.append(bottom)
                 tcPr.append(tcB)
@@ -240,7 +283,7 @@ def add_caption(doc, text, keep_next=False):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
     p.paragraph_format.space_before = Pt(6)
-    p.paragraph_format.space_after = Pt(6)
+    p.paragraph_format.space_after = Pt(9)
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
     if keep_next:
         p.paragraph_format.keep_with_next = True
@@ -251,17 +294,14 @@ def add_code(doc, lines):
     for line in lines:
         p = doc.add_paragraph()
         p.paragraph_format.first_line_indent = Pt(0)
-        p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        p.paragraph_format.left_indent = Pt(5.6)
+        p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+        p.paragraph_format.line_spacing = Pt(20)
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
-        p.paragraph_format.left_indent = Pt(12)
-        shd = OxmlElement("w:shd")
-        shd.set(qn("w:val"), "clear")
-        shd.set(qn("w:fill"), "F5F6F8")
-        p._p.get_or_add_pPr().append(shd)
         run = p.add_run(line if line else " ")
-        set_font(run, MONO, 9)
-
+        set_font(run, "Times New Roman", 10.5)
+        run.font.italic = True
 
 def add_image(doc, path, width_cm=15.5):
     p = doc.add_paragraph()
@@ -275,8 +315,8 @@ def add_image(doc, path, width_cm=15.5):
     with _Img.open(path) as im:
         w, h = im.size
     target = width_cm
-    if w and h and (h / w) * target > 19.0:
-        target = 19.0 * w / h
+    if w and h and (h / w) * target > 18.3:
+        target = 18.3 * w / h
     run = p.add_run()
     run.add_picture(path, width=Cm(target))
 
