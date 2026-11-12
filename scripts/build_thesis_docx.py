@@ -214,6 +214,15 @@ def three_line_table(doc, rows):
     for idx_w, wcm in enumerate(widths):
         for cell in table.columns[idx_w].cells:
             cell.width = Cm(wcm)
+    for ri, row in enumerate(table.rows):
+        trPr = row._tr.get_or_add_trPr()
+        cant = OxmlElement("w:cantSplit")
+        trPr.append(cant)
+        if ri < len(table.rows) - 1:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    para.paragraph_format.keep_with_next = True
+
     tbl = table._tbl
     tblPr = tbl.tblPr
 
@@ -603,9 +612,15 @@ def build_docx(md_path, out_path):
             title = line[2:].strip()
             if is_chapter(title) and title.startswith("1") and not toc_done:
                 doc.add_page_break()
+                sp1 = doc.add_paragraph()
+                sp1.paragraph_format.space_before = Pt(0)
+                sp1.paragraph_format.space_after = Pt(0)
+                sp1.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+                sp1.paragraph_format.line_spacing = Pt(3)
                 h = doc.add_paragraph()
                 h.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 h.paragraph_format.first_line_indent = Pt(0)
+                h.paragraph_format.space_before = Pt(0)
                 h.paragraph_format.space_after = Pt(9)
                 run = h.add_run("目  录")
                 set_font(run, HEI, 18, False)
@@ -633,11 +648,17 @@ def build_docx(md_path, out_path):
                     i += 1
                 tight = title == "Abstract"
                 for k, txt in enumerate(picked):
+                    if k == 0:
+                        sp0 = doc.add_paragraph()
+                        sp0.paragraph_format.space_before = Pt(0)
+                        sp0.paragraph_format.space_after = Pt(0)
+                        sp0.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+                        sp0.paragraph_format.line_spacing = Pt(3)
                     para = doc.add_paragraph()
                     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     para.paragraph_format.first_line_indent = Pt(0)
                     if k == 0:
-                        para.paragraph_format.space_before = Pt(5)
+                        para.paragraph_format.space_before = Pt(0)
                         para.paragraph_format.space_after = Pt(31 if tight else 29)
                         add_inline(para, txt, size=18, font=HEI)
                     elif tight:
@@ -676,6 +697,11 @@ def build_docx(md_path, out_path):
         if m:
             h = doc.add_paragraph(style="Heading 4")
             add_inline(h, line.strip().strip("*"), size=12, font=HEI)
+            i += 1
+            continue
+
+        if line.strip() == "<!--break-->":
+            doc.add_page_break()
             i += 1
             continue
 
