@@ -670,7 +670,9 @@ def build_docx(md_path, out_path):
                 continue
 
             h = doc.add_paragraph(style="Heading 1")
-            h.paragraph_format.page_break_before = is_chapter(title) and not title.startswith("1 ")
+            h.paragraph_format.page_break_before = (is_chapter(title) and not title.startswith("1 ")) or title in ("参考文献", "致谢")
+            if title in ("参考文献", "致谢"):
+                h.paragraph_format.space_before = Pt(0)
             add_inline(h, title, size=18, font=HEI)
             i += 1
             continue
@@ -767,6 +769,14 @@ def build_docx(md_path, out_path):
 
         p = doc.add_paragraph()
         text = line.strip()
+        if text.startswith("[") and "] " in text[:8]:
+            p.paragraph_format.left_indent = Cm(0.65)
+            p.paragraph_format.first_line_indent = Cm(-0.65)
+            p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            p.paragraph_format.line_spacing = Pt(22)
+            add_inline(p, text, size=10.5)
+            i += 1
+            continue
         label_specs = [
             ("摘要：", 12, False, HEI),
             ("关键词：", 12, False, HEI),
