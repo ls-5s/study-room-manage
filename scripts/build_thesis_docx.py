@@ -69,6 +69,9 @@ def body_style(doc):
     pf.space_after = Pt(0)
 
 
+    doc.styles["Normal"].paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+
 def style_heading(doc, name, size, align, before, after, bold=False):
     st = doc.styles[name]
     st.font.name = HEI
@@ -103,12 +106,12 @@ def ensure_toc_styles(doc):
             '<w:style %s w:type="paragraph" w:styleId="%s">'
             '<w:name w:val="%s"/><w:basedOn w:val="Normal"/>'
             '<w:pPr><w:spacing w:before="0" w:after="0" w:line="400" w:lineRule="exact"/>'
-            '<w:ind w:leftChars="%d" w:left="%d" w:firstLineChars="0" w:firstLine="0"/>'
+            '<w:ind w:left="%d" w:firstLine="0"/>'
             '</w:pPr>'
-            '<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="宋体"/>'
+            '<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="黑体"/>'
             '<w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>'
             '</w:style>'
-        ) % (nsdecls("w"), sid, name, left, left * 120)
+        ) % (nsdecls("w"), sid, name, [0, 442, 878][level - 1])
         styles.append(parse_xml(xml))
 
 
@@ -141,14 +144,15 @@ def page_number_format(section, fmt="decimal", start=1):
 
 
 def setup_header_footer(section):
-    section.header_distance = Cm(1.55)
+    section.header_distance = Cm(2.0)
+    section.footer_distance = Cm(1.94)
     header = section.header
     p = header.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after = Pt(0)
     run = p.add_run("成都锦城学院毕业论文（设计）")
-    set_font(run, SONG, 10.5)
+    set_font(run, "华文行楷", 10.5)
     pPr = p._p.get_or_add_pPr()
     pBdr = OxmlElement("w:pBdr")
     bottom = OxmlElement("w:bottom")
@@ -259,7 +263,7 @@ def add_code(doc, lines):
         set_font(run, MONO, 9)
 
 
-def add_image(doc, path, width_cm=14.5):
+def add_image(doc, path, width_cm=15.5):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
@@ -267,18 +271,24 @@ def add_image(doc, path, width_cm=14.5):
     p.paragraph_format.space_after = Pt(3)
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
     p.paragraph_format.keep_with_next = True
+    from PIL import Image as _Img
+    with _Img.open(path) as im:
+        w, h = im.size
+    target = width_cm
+    if w and h and (h / w) * target > 19.0:
+        target = 19.0 * w / h
     run = p.add_run()
-    run.add_picture(path, width=Cm(width_cm))
+    run.add_picture(path, width=Cm(target))
 
 
 def build_docx(md_path, out_path):
     doc = Document()
     body_style(doc)
     ensure_toc_styles(doc)
-    style_heading(doc, "Heading 1", 18, WD_ALIGN_PARAGRAPH.LEFT, 0, 8)
-    style_heading(doc, "Heading 2", 14, WD_ALIGN_PARAGRAPH.LEFT, 8, 6)
-    style_heading(doc, "Heading 3", 12, WD_ALIGN_PARAGRAPH.LEFT, 6, 4)
-    style_heading(doc, "Heading 4", 12, WD_ALIGN_PARAGRAPH.LEFT, 6, 3, bold=True)
+    style_heading(doc, "Heading 1", 18, WD_ALIGN_PARAGRAPH.LEFT, 11, 2)
+    style_heading(doc, "Heading 2", 14, WD_ALIGN_PARAGRAPH.LEFT, 4, 4)
+    style_heading(doc, "Heading 3", 12, WD_ALIGN_PARAGRAPH.LEFT, 3, 2)
+    style_heading(doc, "Heading 4", 12, WD_ALIGN_PARAGRAPH.LEFT, 3, 3, bold=True)
 
     sec = doc.sections[0]
     sec.page_width = Cm(21.0)
@@ -299,21 +309,21 @@ def build_docx(md_path, out_path):
     # ---- 封面 ----
     p = doc.add_paragraph()
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_before = Pt(48)
+    p.paragraph_format.space_before = Pt(44)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_after = Pt(22)
+    p.paragraph_format.space_after = Pt(32)
     run = p.add_run("成都锦城学院")
-    set_font(run, "华文行楷", 24.5, True)
+    set_font(run, "微软雅黑", 24.5, True)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_after = Pt(18)
+    p.paragraph_format.space_after = Pt(46)
     run = p.add_run("本科生毕业论文（设计）")
-    set_font(run, "华文行楷", 26, True)
+    set_font(run, "华文中宋", 26, False)
 
     def para_bottom_border(paragraph, sz=6):
         pPr = paragraph._p.get_or_add_pPr()
@@ -342,6 +352,26 @@ def build_docx(md_path, out_path):
             layout = OxmlElement("w:tblLayout")
             tblPr.append(layout)
         layout.set(qn("w:type"), "fixed")
+        jc = tblPr.find(qn("w:jc"))
+        if jc is not None:
+            tblPr.remove(jc)
+        ind = tblPr.find(qn("w:tblInd"))
+        if ind is None:
+            ind = OxmlElement("w:tblInd")
+            tblPr.append(ind)
+        ind.set(qn("w:w"), str(Cm(3.69).twips))
+        ind.set(qn("w:type"), "dxa")
+        mar = tblPr.find(qn("w:tblCellMar"))
+        if mar is None:
+            mar = OxmlElement("w:tblCellMar")
+            tblPr.append(mar)
+        for side, val in (("top", "0"), ("bottom", "0"), ("left", "28"), ("right", "28")):
+            el = mar.find(qn("w:" + side))
+            if el is None:
+                el = OxmlElement("w:" + side)
+                mar.append(el)
+            el.set(qn("w:w"), val)
+            el.set(qn("w:type"), "dxa")
         grid = tbl.find(qn("w:tblGrid"))
         if grid is not None:
             for col, w in zip(grid.findall(qn("w:gridCol")), widths):
@@ -350,7 +380,10 @@ def build_docx(md_path, out_path):
             for cell in table.columns[j].cells:
                 cell.width = w
 
-    def cell_text(cell, text, width, is_label, size=14):
+    SIZE = 14
+    W_LABEL, W_VALUE = Cm(2.27), Cm(6.98)
+
+    def cell_text(cell, text, width, is_label, size=SIZE, row_h=None, align=None):
         cell.width = width
         cell.vertical_alignment = WD_ALIGN_VERTICAL.BOTTOM
         para = cell.paragraphs[0]
@@ -362,78 +395,57 @@ def build_docx(md_path, out_path):
         pf.line_spacing = Pt(size)
         if is_label:
             para.alignment = (WD_ALIGN_PARAGRAPH.DISTRIBUTE
-                              if len(text) <= 2 else WD_ALIGN_PARAGRAPH.RIGHT)
+                              if len(text) <= 2 else WD_ALIGN_PARAGRAPH.LEFT)
         else:
-            para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            para.alignment = align or WD_ALIGN_PARAGRAPH.CENTER
             para_bottom_border(para)
         run = para.add_run(text)
         set_font(run, SONG, size)
 
-    def spacer(pts):
-        sp = doc.add_paragraph()
-        sp.paragraph_format.first_line_indent = Pt(0)
-        sp.paragraph_format.space_before = Pt(0)
-        sp.paragraph_format.space_after = Pt(0)
-        sp.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-        sp.paragraph_format.line_spacing = Pt(pts)
-
-    SIZE = 14
-    W_LABEL, W_VALUE = Cm(2.6), Cm(7.4)
-    ROW_H = Cm(1.92)
-    TITLE_H = Cm(0.80)
-
     # 题目两行
     table = doc.add_table(rows=2, cols=2)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    for i, line in enumerate(["基于 Vue3 的校园自习室预约", "管理系统的设计与实现"]):
-        table.rows[i].height = TITLE_H
-        if i == 0:
-            cell_text(table.cell(0, 0), "题目", W_LABEL, True, SIZE)
-        else:
-            cell_text(table.cell(1, 0), "", W_LABEL, True, SIZE)
-        cell_text(table.cell(i, 1), line, W_VALUE, False, SIZE)
+    for i, line in enumerate(["基于 Vue3 的校园自习室", "预约管理系统的设计与实现"]):
+        table.rows[i].height = Cm(0.80)
+        cell_text(table.cell(i, 0), "题目" if i == 0 else "", W_LABEL, True)
+        cell_text(table.cell(i, 1), line, W_VALUE, False)
     fix_layout(table, [W_LABEL, W_VALUE])
-    spacer(0)
 
     table = doc.add_table(rows=3, cols=2)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
     for i, (label, value) in enumerate([("二级学院", "计算机学院"),
                                        ("专业", "计算机科学与技术"),
                                        ("学生姓名", "李洋")]):
-        table.rows[i].height = ROW_H
-        cell_text(table.cell(i, 0), label, W_LABEL, True, SIZE)
-        cell_text(table.cell(i, 1), value, W_VALUE, False, SIZE)
+        table.rows[i].height = Cm(1.92)
+        cell_text(table.cell(i, 0), label, W_LABEL, True)
+        cell_text(table.cell(i, 1), value, W_VALUE, False)
     fix_layout(table, [W_LABEL, W_VALUE])
-    spacer(0)
 
     table = doc.add_table(rows=1, cols=4)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.rows[0].height = ROW_H
-    widths = [Cm(2.6), Cm(2.9), Cm(1.4), Cm(3.1)]
-    cell_text(table.cell(0, 0), "学号", widths[0], True, SIZE)
-    cell_text(table.cell(0, 1), "233020152", widths[1], False, SIZE)
-    cell_text(table.cell(0, 2), "年级", widths[2], True, SIZE)
-    cell_text(table.cell(0, 3), "2023", widths[3], False, SIZE)
+    table.rows[0].height = Cm(1.92)
+    widths = [Cm(2.27), Cm(3.22), Cm(1.15), Cm(2.56)]
+    cell_text(table.cell(0, 0), "学号", widths[0], True)
+    cell_text(table.cell(0, 1), "233020152", widths[1], False, align=WD_ALIGN_PARAGRAPH.LEFT)
+    cell_text(table.cell(0, 2), "年级", widths[2], True)
+    cell_text(table.cell(0, 3), "2023", widths[3], False, align=WD_ALIGN_PARAGRAPH.LEFT)
     fix_layout(table, widths)
-    spacer(0)
 
     table = doc.add_table(rows=1, cols=2)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.rows[0].height = ROW_H
-    cell_text(table.cell(0, 0), "指导教师", W_LABEL, True, SIZE)
-    cell_text(table.cell(0, 1), "黄媛媛", W_VALUE, False, SIZE)
+    table.rows[0].height = Cm(1.92)
+    cell_text(table.cell(0, 0), "指导教师", W_LABEL, True)
+    cell_text(table.cell(0, 1), "黄媛媛", W_VALUE, False)
     fix_layout(table, [W_LABEL, W_VALUE])
 
     p = doc.add_paragraph()
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_before = Pt(92)
+    p.paragraph_format.space_before = Pt(63)
 
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.left_indent = Cm(8.24)
     p.paragraph_format.first_line_indent = Pt(0)
     add_inline(p, "教务处  制表", size=16)
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.left_indent = Cm(8.85)
     p.paragraph_format.first_line_indent = Pt(0)
     p.paragraph_format.space_before = Pt(12)
     add_inline(p, "2026 年 11 月 12 日", size=15)
@@ -451,18 +463,20 @@ def build_docx(md_path, out_path):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_before = Pt(28)
-    p.paragraph_format.space_after = Pt(14)
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(22)
+    p.paragraph_format.left_indent = Cm(0.66)
     run = p.add_run("成都锦城学院")
     set_font(run, HEI, 18, False)
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_after = Pt(16)
+    p.paragraph_format.space_after = Pt(14)
+    p.paragraph_format.left_indent = Cm(0.66)
     run = p.add_run("毕业论文（设计）学术诚信声明")
     set_font(run, HEI, 18, False)
 
-    def decl_body(text, spacing=38, gap_before=44):
+    def decl_body(text, spacing=38, gap_before=41):
         para = doc.add_paragraph()
         pf = para.paragraph_format
         pf.first_line_indent = Pt(28)
@@ -470,31 +484,38 @@ def build_docx(md_path, out_path):
         pf.space_after = Pt(0)
         pf.line_spacing_rule = WD_LINE_SPACING.EXACTLY
         pf.line_spacing = Pt(spacing)
-        add_inline(para, text, size=14)
+        add_inline(para, text, size=14, font="等线")
         return para
 
     decl_body("本人郑重声明：所呈交的毕业论文（设计），是本人在导师的指导下，独立进行研究工作所取得的成果。除文中已经注明引用的内容外，本论文（设计）不包含任何其他个人或集体已经发表或撰写过的作品成果。对本文的研究做出重要贡献的个人和集体，均已在文中以明确方式标明。本人完全意识到本声明的法律结果由本人承担。")
 
-    for _ in range(5):
+    for _ in range(9):
         doc.add_paragraph()
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.left_indent = Cm(6.67)
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.left_indent = Cm(4.6)
-    add_inline(p, "作者签名：____________", size=14)
-    for _ in range(2):
+    add_inline(p, "作者签名：", size=14, font="等线")
+    for _ in range(3):
         doc.add_paragraph()
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.paragraph_format.left_indent = Cm(6.67)
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.left_indent = Cm(4.6)
-    add_inline(p, "日期：      年    月    日", size=14)
+    for pos in (Cm(9.63), Cm(10.86), Cm(12.09)):
+        p.paragraph_format.tab_stops.add_tab_stop(pos)
+    add_inline(p, "日期：\t年\t月\t日", size=14, font="等线")
 
     doc.add_page_break()
+    sp = doc.add_paragraph()
+    sp.paragraph_format.space_before = Pt(0)
+    sp.paragraph_format.space_after = Pt(0)
+    sp.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+    sp.paragraph_format.line_spacing = Pt(84)
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_before = Pt(84)
+    p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after = Pt(14)
     run = p.add_run("成都锦城学院")
     set_font(run, HEI, 18, False)
@@ -504,7 +525,7 @@ def build_docx(md_path, out_path):
     p.paragraph_format.space_after = Pt(16)
     run = p.add_run("毕业论文（设计）版权使用授权书")
     set_font(run, HEI, 18, False)
-    decl_body("本毕业论文（设计）作者同意学校保留并向国家有关部门或机构送交论文的复印件和电子版，允许论文被查阅和借阅。本人授权成都锦城学院可以将本毕业论文（设计）的全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存和汇编本毕业论文（设计）。", spacing=28.5)
+    decl_body("本毕业论文（设计）作者同意学校保留并向国家有关部门或机构送交论文的复印件和电子版，允许论文被查阅和借阅。本人授权成都锦城学院可以将本毕业论文（设计）的全部或部分内容编入有关数据库进行检索，可以采用影印、缩印或扫描等复制手段保存和汇编本毕业论文（设计）。", spacing=28.5, gap_before=56)
 
     for _ in range(4):
         doc.add_paragraph()
@@ -523,6 +544,10 @@ def build_docx(md_path, out_path):
 
     i = 0
     in_body = False
+    def is_chapter(title):
+        import re as _re
+        return bool(_re.match(r"^\d+\s", title))
+
     toc_done = False
     n = len(lines)
 
@@ -536,11 +561,12 @@ def build_docx(md_path, out_path):
 
         if line.startswith("# "):
             title = line[2:].strip()
-            if title.startswith("第 1 章") and not toc_done:
+            if is_chapter(title) and title.startswith("1") and not toc_done:
                 doc.add_page_break()
                 h = doc.add_paragraph()
                 h.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 h.paragraph_format.first_line_indent = Pt(0)
+                h.paragraph_format.space_after = Pt(9)
                 run = h.add_run("目  录")
                 set_font(run, HEI, 18, False)
                 p = doc.add_paragraph()
@@ -565,47 +591,51 @@ def build_docx(md_path, out_path):
                     if lines[i].strip():
                         picked.append(lines[i].strip())
                     i += 1
+                tight = title == "Abstract"
                 for k, txt in enumerate(picked):
                     para = doc.add_paragraph()
                     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     para.paragraph_format.first_line_indent = Pt(0)
                     if k == 0:
-                        para.paragraph_format.space_before = Pt(6)
-                        para.paragraph_format.space_after = Pt(12)
-                        add_inline(para, txt, size=18)
+                        para.paragraph_format.space_before = Pt(5)
+                        para.paragraph_format.space_after = Pt(31 if tight else 29)
+                        add_inline(para, txt, size=18, font=HEI)
+                    elif tight:
+                        para.paragraph_format.space_after = Pt(22)
+                        add_inline(para, txt, size=14, bold=True, font="Times New Roman")
                     else:
-                        para.paragraph_format.space_after = Pt(10)
-                        add_inline(para, txt, size=14)
+                        para.paragraph_format.space_after = Pt(22)
+                        add_inline(para, txt, size=14, font="楷体")
                 continue
 
             h = doc.add_paragraph(style="Heading 1")
-            h.paragraph_format.page_break_before = title.startswith("第 ") and title != "第 1 章"
-            add_inline(h, title, size=18)
+            h.paragraph_format.page_break_before = is_chapter(title) and not title.startswith("1 ")
+            add_inline(h, title, size=18, font=HEI)
             i += 1
             continue
 
         if line.startswith("## "):
             h = doc.add_paragraph(style="Heading 2")
-            add_inline(h, line[3:].strip(), size=14)
+            add_inline(h, line[3:].strip(), size=14, font=HEI)
             i += 1
             continue
 
         if line.startswith("### "):
             h = doc.add_paragraph(style="Heading 3")
-            add_inline(h, line[4:].strip(), size=12)
+            add_inline(h, line[4:].strip(), size=12, font=HEI)
             i += 1
             continue
 
         if line.startswith("#### "):
             h = doc.add_paragraph(style="Heading 4")
-            add_inline(h, line[5:].strip(), size=12)
+            add_inline(h, line[5:].strip(), size=12, font=HEI)
             i += 1
             continue
 
         m = re.match(r"^\*\*（[一二三四五六]）.*\*\*$", line.strip())
         if m:
             h = doc.add_paragraph(style="Heading 4")
-            add_inline(h, line.strip().strip("*"), size=12)
+            add_inline(h, line.strip().strip("*"), size=12, font=HEI)
             i += 1
             continue
 
@@ -670,7 +700,28 @@ def build_docx(md_path, out_path):
             continue
 
         p = doc.add_paragraph()
-        add_inline(p, line.strip())
+        text = line.strip()
+        label_specs = [
+            ("摘要：", 12, False, HEI),
+            ("关键词：", 12, False, HEI),
+            ("Abstract:", 12, True, "Times New Roman"),
+            ("Key Words:", 12, True, "Times New Roman"),
+        ]
+        matched = False
+        for label, size, bold, font in label_specs:
+            if text.startswith(label):
+                r1 = p.add_run(label)
+                set_font(r1, font, size)
+                r1.font.bold = bold
+                rest = text[len(label):]
+                if rest.startswith(" "):
+                    rest = rest[1:]
+                    r1.text = label + " "
+                add_inline(p, rest, size=size)
+                matched = True
+                break
+        if not matched:
+            add_inline(p, text)
         i += 1
 
     doc.save(out_path)

@@ -20,10 +20,10 @@ if not os.path.exists(BOLD_PATH):
     BOLD_PATH = FONT_PATH
 
 INK = (34, 34, 34)
-LINE = (90, 96, 106)
-FILL = (252, 252, 253)
-ACCENT = (228, 236, 245)
-HEAD_FILL = (238, 242, 247)
+LINE = (0, 0, 0)
+FILL = (255, 255, 255)
+ACCENT = (255, 255, 255)
+HEAD_FILL = (255, 255, 255)
 
 _font_cache = {}
 
@@ -74,7 +74,7 @@ def text_center(draw, cx, cy, text, f, fill=INK):
 def box(draw, cx, cy, w, h, text, size=26, bold=False, fill=FILL, radius=12):
     draw.rounded_rectangle(
         [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2],
-        radius=radius, fill=fill, outline=LINE, width=2,
+        radius=radius, fill=fill, outline=LINE, width=3,
     )
     f = font(size, bold)
     text_center(draw, cx, cy, text, f)
@@ -94,7 +94,7 @@ def diamond(draw, cx, cy, w, h, text, size=22):
 
 def actor(draw, cx, cy, label, size=24):
     r = 16
-    draw.ellipse([cx - r, cy - 58, cx + r, cy - 26], outline=LINE, width=2, fill=FILL)
+    draw.ellipse([cx - r, cy - 58, cx + r, cy - 26], outline=LINE, width=3, fill=FILL)
     draw.line([cx, cy - 26, cx, cy + 10], fill=LINE, width=2)
     draw.line([cx - 26, cy - 10, cx + 26, cy - 10], fill=LINE, width=2)
     draw.line([cx, cy + 10, cx - 22, cy + 46], fill=LINE, width=2)
@@ -149,6 +149,19 @@ def diamond_edge(cx, cy, w, h, tx, ty):
     return cx + dx * scale, cy + dy * scale
 
 
+
+def _trim(img, pad=24):
+    from PIL import ImageOps
+    inv = ImageOps.invert(img.convert("RGB"))
+    bbox = inv.getbbox()
+    if not bbox:
+        return img
+    l, t_, r, b = bbox
+    l = max(0, l - pad); t_ = max(0, t_ - pad)
+    r = min(img.width, r + pad); b = min(img.height, b + pad)
+    return img.crop((l, t_, r, b))
+
+
 def new_canvas(w, h):
     img = Image.new("RGB", (w, h), (255, 255, 255))
     return img, ImageDraw.Draw(img)
@@ -184,7 +197,7 @@ def draw_usecase(spec, out):
             if spec.get("edges") and [ai, ui] not in spec["edges"]:
                 continue
             arrow(d, actor_pos[ai], (u_pos[ui][0] - 4, u_pos[ui][1]))
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 功能结构树 ----------------
@@ -193,7 +206,6 @@ def draw_tree(spec, out):
     n = len(items)
     w, h = 1400, 210 + 92 * n
     img, d = new_canvas(w, h)
-    d.text((44, 30), spec["title"], font=font(28, True), fill=INK)
 
     mid = (110 + h - 50) / 2
     root_x, root_w, root_h = 280, 220, 96
@@ -208,7 +220,7 @@ def draw_tree(spec, out):
     for i, (it, y) in enumerate(zip(items, ys)):
         d.line([spine, y, 950, y], fill=LINE, width=2)
         box(d, 1130, y, 340, 66, it, size=21)
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 用例图（主用例 + include 子用例） ----------------
@@ -217,7 +229,6 @@ def draw_usecase_include(spec, out):
     n = len(subs)
     w, h = 1400, 190 + 118 * n
     img, d = new_canvas(w, h)
-    d.text((44, 26), spec["title"], font=font(28, True), fill=INK)
 
     # 系统边界
     d.rounded_rectangle([50, 86, w - 50, h - 40], radius=10, outline=(150, 156, 166), width=2)
@@ -251,7 +262,7 @@ def draw_usecase_include(spec, out):
         f = font(19)
         tw, th = text_size(d, "include", f)
         d.text((lx - tw / 2, ly - th / 2), "include", font=f, fill=INK)
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 实体属性图 ----------------
@@ -260,7 +271,6 @@ def draw_attr(spec, out):
     n = len(attrs)
     w, h = 1400, 1020
     img, d = new_canvas(w, h)
-    d.text((44, 30), spec["title"], font=font(28, True), fill=INK)
 
     cx, cy = w / 2, h / 2 + 26
     rx, ry = 480, 360
@@ -272,7 +282,7 @@ def draw_attr(spec, out):
         sx, sy = box_edge(cx, cy, 210, 96, ax, ay)
         d.line([sx, sy, ax, ay], fill=LINE, width=2)
         ellipse(d, ax, ay, 176, 66, a, size=19)
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 时序图 ----------------
@@ -283,7 +293,6 @@ def draw_sequence(spec, out):
     w = 1500
     h = 250 + 86 * n
     img, d = new_canvas(w, h)
-    d.text((44, 30), spec["title"], font=font(28, True), fill=INK)
 
     top = 140
     xs = []
@@ -292,7 +301,7 @@ def draw_sequence(spec, out):
         x = 150 + gap * i
         xs.append(x)
         d.rounded_rectangle([x - 130, top - 38, x + 130, top + 38], radius=8,
-                            fill=(232, 240, 250), outline=LINE, width=2)
+                            fill=(255, 255, 255), outline=LINE, width=2)
         text_center(d, x, top, p, font(23, True))
 
     for x in xs:
@@ -338,7 +347,7 @@ def draw_sequence(spec, out):
         d.text(((x1 + x2) / 2 - tw / 2, y - 34), m["label"], font=f, fill=INK)
         badge(x1 + (26 if x2 > x1 else -26), y - 6, idx)
         y += 86
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 状态图 ----------------
@@ -346,7 +355,6 @@ def draw_state(spec, out):
     nodes = spec["nodes"]
     w, h = 1400, 760
     img, d = new_canvas(w, h)
-    d.text((48, 40), spec["title"], font=font(28, True), fill=INK)
 
     pos, size = {}, {}
     for nd in nodes:
@@ -370,7 +378,7 @@ def draw_state(spec, out):
     for nd in nodes:
         box(d, nd["x"], nd["y"], nd["w"], nd["h"], nd["label"], size=24, bold=True,
             fill=HEAD_FILL if nd.get("start") else FILL)
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 结构图 / 架构图 ----------------
@@ -379,12 +387,11 @@ def draw_structure(spec, out):
     w = 1500
     h = 200 + sum(g["h"] for g in groups) + 60 * (len(groups) - 1)
     img, d = new_canvas(w, h)
-    d.text((48, 40), spec["title"], font=font(28, True), fill=INK)
     y = 130
     for g in groups:
         d.rounded_rectangle([70, y, w - 70, y + g["h"]], radius=14,
-                            outline=LINE, width=2, fill=(248, 250, 252))
-        d.text((96, y + 12), g["label"], font=font(22, True), fill=(70, 78, 90))
+                            outline=LINE, width=3, fill=(255, 255, 255))
+        d.text((96, y + 12), g["label"], font=font(22, True), fill=(0, 0, 0))
         items = g["items"]
         n = len(items)
         cw = (w - 260) / n
@@ -392,7 +399,7 @@ def draw_structure(spec, out):
             cx = 130 + cw * (i + 0.5)
             box(d, cx, y + g["h"] * 0.62, cw - 26, g["h"] * 0.46, it, size=21)
         y += g["h"] + 60
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- E-R 图 ----------------
@@ -402,7 +409,6 @@ def draw_er(spec, out):
     w = spec.get("w", 1500)
     h = spec.get("h", 980)
     img, d = new_canvas(w, h)
-    d.text((44, 30), spec["title"], font=font(28, True), fill=INK)
 
     EW, EH = 200, 72
     DW, DH = 136, 66
@@ -460,7 +466,7 @@ def draw_er(spec, out):
                 tx = sx + perx * 22
                 ty = sy + pery * 22
                 d.text((tx - tw / 2, ty - th / 2), lab, font=f, fill=INK)
-    img.save(out)
+    _trim(img).save(out)
 
 
 # ---------------- 整体 E-R 图（实体+属性+联系） ----------------
@@ -470,7 +476,6 @@ def draw_er_full(spec, out):
     w = spec.get("w", 2000)
     h = spec.get("h", 1500)
     img, d = new_canvas(w, h)
-    d.text((44, 30), spec["title"], font=font(30, True), fill=INK)
 
     EW, EH = 200, 84
     DW, DH = 156, 74
@@ -524,7 +529,7 @@ def draw_er_full(spec, out):
             mx = (sx + ex) / 2 + perx * 20
             my = (sy + ey) / 2 + pery * 20
             d.text((mx - tw / 2, my - th / 2), lab, font=f, fill=INK)
-    img.save(out)
+    _trim(img).save(out)
 
 
 def main():
