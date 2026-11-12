@@ -275,9 +275,9 @@ def build_docx(md_path, out_path):
     doc = Document()
     body_style(doc)
     ensure_toc_styles(doc)
-    style_heading(doc, "Heading 1", 18, WD_ALIGN_PARAGRAPH.LEFT, 12, 18)
-    style_heading(doc, "Heading 2", 14, WD_ALIGN_PARAGRAPH.LEFT, 12, 6)
-    style_heading(doc, "Heading 3", 12, WD_ALIGN_PARAGRAPH.LEFT, 8, 4)
+    style_heading(doc, "Heading 1", 18, WD_ALIGN_PARAGRAPH.LEFT, 0, 8)
+    style_heading(doc, "Heading 2", 14, WD_ALIGN_PARAGRAPH.LEFT, 8, 6)
+    style_heading(doc, "Heading 3", 12, WD_ALIGN_PARAGRAPH.LEFT, 6, 4)
     style_heading(doc, "Heading 4", 12, WD_ALIGN_PARAGRAPH.LEFT, 6, 3, bold=True)
 
     sec = doc.sections[0]
