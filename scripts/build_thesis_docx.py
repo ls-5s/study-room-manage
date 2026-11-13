@@ -293,7 +293,7 @@ def add_caption(doc, text, keep_next=False):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
     p.paragraph_format.space_before = Pt(6.3)
-    p.paragraph_format.space_after = Pt(7.2)
+    p.paragraph_format.space_after = Pt(1.2 if keep_next else 7.2)
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
     if keep_next:
         p.paragraph_format.keep_with_next = True
