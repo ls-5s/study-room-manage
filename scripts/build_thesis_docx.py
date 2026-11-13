@@ -324,8 +324,15 @@ def add_image(doc, path, width_cm=15.5):
     with _Img.open(path) as im:
         w, h = im.size
     target = width_cm
-    if w and h and (h / w) * target > 18.3:
-        target = 18.3 * w / h
+    path_norm = path.replace("\\", "/")
+    if "screenshots" in path_norm and w and h:
+        # 界面截图按高度 240 pt 排版，避免整页只放一张图
+        target = min(width_cm, 8.47 * w / h)
+    elif w and h and re.search(r"fig4-(?:[4-9]|1[0-3])\.png$", path_norm):
+        # 实体属性图按高度 220 pt，给正文留出行数
+        target = min(width_cm, 10.0 * w / h)
+    elif w and h and (h / w) * target > 9.53:
+        target = 9.53 * w / h
     run = p.add_run()
     run.add_picture(path, width=Cm(target))
 
@@ -335,7 +342,7 @@ def build_docx(md_path, out_path):
     body_style(doc)
     ensure_toc_styles(doc)
     style_heading(doc, "Heading 1", 18, WD_ALIGN_PARAGRAPH.LEFT, 11, 2)
-    style_heading(doc, "Heading 2", 14, WD_ALIGN_PARAGRAPH.LEFT, 4, 4)
+    style_heading(doc, "Heading 2", 14, WD_ALIGN_PARAGRAPH.LEFT, 4, 2)
     style_heading(doc, "Heading 3", 12, WD_ALIGN_PARAGRAPH.LEFT, 3, 2)
     style_heading(doc, "Heading 4", 12, WD_ALIGN_PARAGRAPH.LEFT, 3, 3, bold=True)
 
@@ -621,7 +628,7 @@ def build_docx(md_path, out_path):
                 h.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 h.paragraph_format.first_line_indent = Pt(0)
                 h.paragraph_format.space_before = Pt(0)
-                h.paragraph_format.space_after = Pt(9)
+                h.paragraph_format.space_after = Pt(6.8)
                 run = h.add_run("目  录")
                 set_font(run, HEI, 18, False)
                 p = doc.add_paragraph()
@@ -669,10 +676,22 @@ def build_docx(md_path, out_path):
                         add_inline(para, txt, size=14, font="楷体")
                 continue
 
+            top_offset = ((is_chapter(title) and not title.startswith("1 "))
+                          or title in ("参考文献", "致谢"))
+
             h = doc.add_paragraph(style="Heading 1")
             h.paragraph_format.page_break_before = (is_chapter(title) and not title.startswith("1 ")) or title in ("参考文献", "致谢")
+            if is_chapter(title):
+                h.paragraph_format.space_before = Pt(11) if title.startswith("1 ") else Pt(0)
             if title in ("参考文献", "致谢"):
                 h.paragraph_format.space_before = Pt(0)
+            if title == "参考文献":
+                h.paragraph_format.space_after = Pt(6.8)
+            if title == "致谢":
+                h.paragraph_format.space_after = Pt(6)
+            if top_offset:
+                h.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+                h.paragraph_format.line_spacing = Pt(25.5)
             add_inline(h, title, size=18, font=HEI)
             i += 1
             continue
@@ -769,11 +788,14 @@ def build_docx(md_path, out_path):
 
         p = doc.add_paragraph()
         text = line.strip()
-        if text.startswith("[") and "] " in text[:8]:
+        if re.match(r"^\[\d+\]", text):
             p.paragraph_format.left_indent = Cm(0.65)
             p.paragraph_format.first_line_indent = Cm(-0.65)
             p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
             p.paragraph_format.line_spacing = Pt(22)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             add_inline(p, text, size=10.5)
             i += 1
             continue
