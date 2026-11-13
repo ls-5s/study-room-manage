@@ -197,8 +197,8 @@ def add_inline(paragraph, text, size=12, bold=False, font=SONG):
 def three_line_table(doc, rows):
     cols = len(rows[0])
     head = [c.strip() for c in rows[0]]
-    if head[:3] == ["字段名", "数据类型", "主键"]:
-        widths = [3.8, 3.4, 1.2, 1.2, 5.9]
+    if head[:3] in (["字段名称", "数据类型", "是否为主键"], ["字段名", "数据类型", "主键"]):
+        widths = [3.39, 2.94, 2.94, 2.94, 3.39]
     else:
         lens = []
         for c in range(cols):
@@ -293,7 +293,7 @@ def add_caption(doc, text, keep_next=False):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
     p.paragraph_format.space_before = Pt(6.3)
-    p.paragraph_format.space_after = Pt(1.2 if keep_next else 7.2)
+    p.paragraph_format.space_after = Pt(0.2 if keep_next else 7.2)
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
     if keep_next:
         p.paragraph_format.keep_with_next = True
