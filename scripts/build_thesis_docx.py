@@ -585,12 +585,12 @@ def build_docx(md_path, out_path):
         doc.add_paragraph()
     p = doc.add_paragraph()
     p.paragraph_format.first_line_indent = Pt(0)
-    add_inline(p, "作者签名：____________        指导教师签名：____________", size=14)
+    add_inline(p, "作者签名：____________        指导教师签名：____________", size=14, font="等线")
     for _ in range(2):
         doc.add_paragraph()
     p = doc.add_paragraph()
     p.paragraph_format.first_line_indent = Pt(0)
-    add_inline(p, "日期：    年  月  日            日期：    年  月  日", size=14)
+    add_inline(p, "日期：    年  月  日            日期：    年  月  日", size=14, font="等线")
 
     # ---- 正文 Markdown ----
     with open(md_path, encoding="utf-8") as fp:
@@ -658,14 +658,18 @@ def build_docx(md_path, out_path):
                         sp0.paragraph_format.space_before = Pt(0)
                         sp0.paragraph_format.space_after = Pt(0)
                         sp0.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-                        sp0.paragraph_format.line_spacing = Pt(3)
+                        sp0.paragraph_format.line_spacing = Pt(8.5 if tight else 3)
                     para = doc.add_paragraph()
                     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     para.paragraph_format.first_line_indent = Pt(0)
                     if k == 0:
                         para.paragraph_format.space_before = Pt(0)
                         para.paragraph_format.space_after = Pt(31 if tight else 29)
-                        add_inline(para, txt, size=18, font=HEI)
+                        if tight:
+                            para.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+                            para.paragraph_format.line_spacing = Pt(25.5)
+                            para.paragraph_format.space_before = Pt(5.5)
+                        add_inline(para, txt, size=18, bold=tight, font=("Times New Roman" if tight else HEI))
                     elif tight:
                         para.paragraph_format.space_after = Pt(22)
                         add_inline(para, txt, size=14, bold=True, font="Times New Roman")
