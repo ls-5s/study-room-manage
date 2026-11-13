@@ -1,6 +1,22 @@
 [
  {
   "file": "fig3-1.png",
+  "kind": "usecase",
+  "title": "",
+  "actors": [
+   "学生"
+  ],
+  "usecases": [
+   "账户管理",
+   "座位查询",
+   "预约提交",
+   "签到",
+   "取消与记录",
+   "违约与反馈"
+  ]
+ },
+ {
+  "file": "fig3-2.png",
   "kind": "tree",
   "title": "学生功能结构图",
   "root": "学生",
@@ -14,7 +30,7 @@
   ]
  },
  {
-  "file": "fig3-2.png",
+  "file": "fig3-3.png",
   "kind": "usecase",
   "title": "学生账户管理用例",
   "actor": "学生",
@@ -29,7 +45,7 @@
   "boundary": "校园自习室预约管理系统"
  },
  {
-  "file": "fig3-3.png",
+  "file": "fig3-4.png",
   "kind": "usecase",
   "title": "学生座位查询用例",
   "actor": "学生",
@@ -43,7 +59,7 @@
   "boundary": "校园自习室预约管理系统"
  },
  {
-  "file": "fig3-4.png",
+  "file": "fig3-5.png",
   "kind": "usecase",
   "title": "学生预约提交用例",
   "actor": "学生",
@@ -57,7 +73,7 @@
   "boundary": "校园自习室预约管理系统"
  },
  {
-  "file": "fig3-5.png",
+  "file": "fig3-6.png",
   "kind": "usecase",
   "title": "学生签到用例",
   "actor": "学生",
@@ -71,7 +87,7 @@
   "boundary": "校园自习室预约管理系统"
  },
  {
-  "file": "fig3-6.png",
+  "file": "fig3-7.png",
   "kind": "usecase",
   "title": "学生取消与记录查询用例",
   "actor": "学生",
@@ -84,7 +100,7 @@
   "boundary": "校园自习室预约管理系统"
  },
  {
-  "file": "fig3-7.png",
+  "file": "fig3-8.png",
   "kind": "usecase",
   "title": "学生违约与反馈用例",
   "actor": "学生",
@@ -98,7 +114,7 @@
   "boundary": "校园自习室预约管理系统"
  },
  {
-  "file": "fig3-8.png",
+  "file": "fig3-9.png",
   "kind": "tree",
   "title": "管理员功能结构图",
   "root": "管理员",
@@ -109,179 +125,6 @@
    "违约管理",
    "反馈处理",
    "统计与报表"
-  ]
- },
- {
-  "file": "fig3-9.png",
-  "kind": "usecase",
-  "title": "管理员自习室管理用例",
-  "actor": "管理员",
-  "main": "自习室管理",
-  "subs": [
-   "新增自习室",
-   "编辑自习室信息",
-   "调整平面尺寸",
-   "启停自习室"
-  ],
-  "boundary": "校园自习室预约管理系统"
- },
- {
-  "file": "fig3-10.png",
-  "kind": "usecase",
-  "title": "管理员时段与座位维护用例",
-  "actor": "管理员",
-  "main": "时段与座位维护",
-  "subs": [
-   "配置开放时段",
-   "启停开放时段",
-   "批量生成座位",
-   "设置维修状态"
-  ],
-  "boundary": "校园自习室预约管理系统"
- },
- {
-  "file": "fig3-11.png",
-  "kind": "usecase",
-  "title": "管理员预约管理用例",
-  "actor": "管理员",
-  "main": "预约管理",
-  "subs": [
-   "多条件查询",
-   "查看详情与时间线",
-   "人工核验签到",
-   "取消异常预约"
-  ],
-  "boundary": "校园自习室预约管理系统"
- },
- {
-  "file": "fig3-12.png",
-  "kind": "usecase",
-  "title": "管理员违约管理用例",
-  "actor": "管理员",
-  "main": "违约管理",
-  "subs": [
-   "查询违约记录",
-   "配置违约规则",
-   "撤销违约"
-  ],
-  "boundary": "校园自习室预约管理系统"
- },
- {
-  "file": "fig3-13.png",
-  "kind": "usecase",
-  "title": "管理员反馈处理用例",
-  "actor": "管理员",
-  "main": "反馈处理",
-  "subs": [
-   "查看工单列表",
-   "查看工单详情",
-   "受理并填写结果",
-   "驳回工单"
-  ],
-  "boundary": "校园自习室预约管理系统"
- },
- {
-  "file": "fig3-14.png",
-  "kind": "usecase",
-  "title": "管理员统计与系统设置用例",
-  "actor": "管理员",
-  "main": "统计与系统设置",
-  "subs": [
-   "查看仪表盘",
-   "查看趋势报表",
-   "导出 CSV",
-   "调整系统参数",
-   "查看任务状态"
-  ],
-  "boundary": "校园自习室预约管理系统"
- },
- {
-  "file": "fig3-15.png",
-  "kind": "state",
-  "title": "预约状态流转",
-  "start": [
-   90,
-   360
-  ],
-  "nodes": [
-   {
-    "id": "pending",
-    "label": "待签到",
-    "x": 330,
-    "y": 360,
-    "w": 210,
-    "h": 92
-   },
-   {
-    "id": "checked",
-    "label": "已签到",
-    "x": 780,
-    "y": 200,
-    "w": 210,
-    "h": 92
-   },
-   {
-    "id": "completed",
-    "label": "已完成",
-    "x": 1140,
-    "y": 200,
-    "w": 210,
-    "h": 92
-   },
-   {
-    "id": "cancelled",
-    "label": "已取消",
-    "x": 330,
-    "y": 620,
-    "w": 210,
-    "h": 92
-   },
-   {
-    "id": "noshow",
-    "label": "已失约",
-    "x": 780,
-    "y": 620,
-    "w": 210,
-    "h": 92
-   }
-  ],
-  "edges": [
-   {
-    "from": "pending",
-    "to": "checked",
-    "label": "窗口内签到",
-    "lpos": [
-     10,
-     -26
-    ]
-   },
-   {
-    "from": "pending",
-    "to": "cancelled",
-    "label": "学生或管理员取消",
-    "lpos": [
-     -96,
-     -10
-    ]
-   },
-   {
-    "from": "pending",
-    "to": "noshow",
-    "label": "超窗未签到",
-    "lpos": [
-     0,
-     -26
-    ]
-   },
-   {
-    "from": "checked",
-    "to": "completed",
-    "label": "到达结束时间",
-    "lpos": [
-     0,
-     -24
-    ]
-   }
   ]
  },
  {
@@ -763,6 +606,389 @@
   ]
  },
  {
+  "file": "fig5-1.png",
+  "kind": "sequence",
+  "title": "学生登录时序",
+  "participants": [
+   "学生",
+   "登录页",
+   "认证服务",
+   "MySQL"
+  ],
+  "messages": [
+   {
+    "from": "学生",
+    "to": "登录页",
+    "label": "输入账号与密码"
+   },
+   {
+    "from": "登录页",
+    "to": "认证服务",
+    "label": "POST /auth/login"
+   },
+   {
+    "from": "认证服务",
+    "to": "MySQL",
+    "label": "查询用户并比对哈希"
+   },
+   {
+    "self": "认证服务",
+    "label": "bcrypt 哈希比对"
+   },
+   {
+    "from": "认证服务",
+    "to": "MySQL",
+    "label": "写入会话记录"
+   },
+   {
+    "from": "认证服务",
+    "to": "登录页",
+    "label": "返回令牌与用户",
+    "kind": "return"
+   },
+   {
+    "from": "登录页",
+    "to": "学生",
+    "label": "跳转首页",
+    "kind": "return"
+   }
+  ]
+ },
+ {
+  "file": "fig5-4.png",
+  "kind": "sequence",
+  "title": "座位可用性查询时序",
+  "participants": [
+   "学生",
+   "选座页",
+   "资源服务",
+   "MySQL"
+  ],
+  "messages": [
+   {
+    "from": "学生",
+    "to": "选座页",
+    "label": "选择日期与时段"
+   },
+   {
+    "from": "选座页",
+    "to": "资源服务",
+    "label": "GET /study-rooms/:id/seats"
+   },
+   {
+    "from": "资源服务",
+    "to": "MySQL",
+    "label": "查询座位与有效预约"
+   },
+   {
+    "from": "MySQL",
+    "to": "资源服务",
+    "label": "座位与占用列表",
+    "kind": "return"
+   },
+   {
+    "from": "资源服务",
+    "to": "选座页",
+    "label": "返回座位状态",
+    "kind": "return"
+   },
+   {
+    "from": "选座页",
+    "to": "学生",
+    "label": "渲染平面图",
+    "kind": "return"
+   }
+  ]
+ },
+ {
+  "file": "fig5-7.png",
+  "kind": "sequence",
+  "title": "预约创建时序",
+  "participants": [
+   "学生",
+   "确认页",
+   "预约服务",
+   "MySQL"
+  ],
+  "messages": [
+   {
+    "from": "学生",
+    "to": "确认页",
+    "label": "确认座位与时段"
+   },
+   {
+    "from": "确认页",
+    "to": "预约服务",
+    "label": "POST /reservations 携带幂等键"
+   },
+   {
+    "from": "预约服务",
+    "to": "MySQL",
+    "label": "开启事务并按序加锁"
+   },
+   {
+    "self": "预约服务",
+    "label": "区间相交判定与配额校验"
+   },
+   {
+    "from": "MySQL",
+    "to": "预约服务",
+    "label": "资源状态",
+    "kind": "return"
+   },
+   {
+    "from": "预约服务",
+    "to": "MySQL",
+    "label": "校验冲突与配额后写入"
+   },
+   {
+    "from": "MySQL",
+    "to": "预约服务",
+    "label": "提交成功",
+    "kind": "return"
+   },
+   {
+    "from": "预约服务",
+    "to": "确认页",
+    "label": "返回预约详情",
+    "kind": "return"
+   }
+  ]
+ },
+ {
+  "file": "fig5-9.png",
+  "kind": "sequence",
+  "title": "学生签到时序",
+  "participants": [
+   "学生",
+   "签到页",
+   "签到服务",
+   "MySQL"
+  ],
+  "messages": [
+   {
+    "from": "学生",
+    "to": "签到页",
+    "label": "扫描或上传二维码"
+   },
+   {
+    "from": "签到页",
+    "to": "签到服务",
+    "label": "POST /reservations/:id/check-in"
+   },
+   {
+    "self": "签到服务",
+    "label": "签名校验与窗口判定"
+   },
+   {
+    "from": "签到服务",
+    "to": "MySQL",
+    "label": "验签并校验窗口后写入签到"
+   },
+   {
+    "from": "MySQL",
+    "to": "签到服务",
+    "label": "签到记录",
+    "kind": "return"
+   },
+   {
+    "from": "签到服务",
+    "to": "签到页",
+    "label": "返回已签到",
+    "kind": "return"
+   }
+  ]
+ },
+ {
+  "file": "fig3-10.png",
+  "kind": "usecase",
+  "title": "",
+  "actors": [
+   "管理员"
+  ],
+  "usecases": [
+   "自习室管理",
+   "时段与座位维护",
+   "预约管理",
+   "违约管理",
+   "反馈处理",
+   "统计与设置"
+  ]
+ },
+ {
+  "file": "fig3-11.png",
+  "kind": "usecase",
+  "title": "管理员自习室管理用例",
+  "actor": "管理员",
+  "main": "自习室管理",
+  "subs": [
+   "新增自习室",
+   "编辑自习室信息",
+   "调整平面尺寸",
+   "启停自习室"
+  ],
+  "boundary": "校园自习室预约管理系统"
+ },
+ {
+  "file": "fig3-12.png",
+  "kind": "usecase",
+  "title": "管理员时段与座位维护用例",
+  "actor": "管理员",
+  "main": "时段与座位维护",
+  "subs": [
+   "配置开放时段",
+   "启停开放时段",
+   "批量生成座位",
+   "设置维修状态"
+  ],
+  "boundary": "校园自习室预约管理系统"
+ },
+ {
+  "file": "fig3-13.png",
+  "kind": "usecase",
+  "title": "管理员预约管理用例",
+  "actor": "管理员",
+  "main": "预约管理",
+  "subs": [
+   "多条件查询",
+   "查看详情与时间线",
+   "人工核验签到",
+   "取消异常预约"
+  ],
+  "boundary": "校园自习室预约管理系统"
+ },
+ {
+  "file": "fig3-14.png",
+  "kind": "usecase",
+  "title": "管理员违约管理用例",
+  "actor": "管理员",
+  "main": "违约管理",
+  "subs": [
+   "查询违约记录",
+   "配置违约规则",
+   "撤销违约"
+  ],
+  "boundary": "校园自习室预约管理系统"
+ },
+ {
+  "file": "fig3-15.png",
+  "kind": "usecase",
+  "title": "管理员反馈处理用例",
+  "actor": "管理员",
+  "main": "反馈处理",
+  "subs": [
+   "查看工单列表",
+   "查看工单详情",
+   "受理并填写结果",
+   "驳回工单"
+  ],
+  "boundary": "校园自习室预约管理系统"
+ },
+ {
+  "file": "fig3-16.png",
+  "kind": "usecase",
+  "title": "管理员统计与系统设置用例",
+  "actor": "管理员",
+  "main": "统计与系统设置",
+  "subs": [
+   "查看仪表盘",
+   "查看趋势报表",
+   "导出 CSV",
+   "调整系统参数",
+   "查看任务状态"
+  ],
+  "boundary": "校园自习室预约管理系统"
+ },
+ {
+  "file": "fig3-17.png",
+  "kind": "state",
+  "title": "预约状态流转",
+  "start": [
+   90,
+   360
+  ],
+  "nodes": [
+   {
+    "id": "pending",
+    "label": "待签到",
+    "x": 330,
+    "y": 360,
+    "w": 210,
+    "h": 92
+   },
+   {
+    "id": "checked",
+    "label": "已签到",
+    "x": 780,
+    "y": 200,
+    "w": 210,
+    "h": 92
+   },
+   {
+    "id": "completed",
+    "label": "已完成",
+    "x": 1140,
+    "y": 200,
+    "w": 210,
+    "h": 92
+   },
+   {
+    "id": "cancelled",
+    "label": "已取消",
+    "x": 330,
+    "y": 620,
+    "w": 210,
+    "h": 92
+   },
+   {
+    "id": "noshow",
+    "label": "已失约",
+    "x": 780,
+    "y": 620,
+    "w": 210,
+    "h": 92
+   }
+  ],
+  "edges": [
+   {
+    "from": "pending",
+    "to": "checked",
+    "label": "窗口内签到",
+    "lpos": [
+     10,
+     -26
+    ]
+   },
+   {
+    "from": "pending",
+    "to": "cancelled",
+    "label": "学生或管理员取消",
+    "lpos": [
+     -96,
+     -10
+    ]
+   },
+   {
+    "from": "pending",
+    "to": "noshow",
+    "label": "超窗未签到",
+    "lpos": [
+     0,
+     -26
+    ]
+   },
+   {
+    "from": "checked",
+    "to": "completed",
+    "label": "到达结束时间",
+    "lpos": [
+     0,
+     -24
+    ]
+   }
+  ]
+ },
+ {
   "file": "fig4-10.png",
   "kind": "attr",
   "title": "预约实体属性图",
@@ -1105,200 +1331,6 @@
     "c2": "N",
     "x": 1110,
     "y": 500
-   }
-  ]
- },
- {
-  "file": "fig5-1.png",
-  "kind": "sequence",
-  "title": "学生登录时序",
-  "participants": [
-   "学生",
-   "登录页",
-   "认证服务",
-   "MySQL"
-  ],
-  "messages": [
-   {
-    "from": "学生",
-    "to": "登录页",
-    "label": "输入账号与密码"
-   },
-   {
-    "from": "登录页",
-    "to": "认证服务",
-    "label": "POST /auth/login"
-   },
-   {
-    "from": "认证服务",
-    "to": "MySQL",
-    "label": "查询用户并比对哈希"
-   },
-   {
-    "self": "认证服务",
-    "label": "bcrypt 哈希比对"
-   },
-   {
-    "from": "认证服务",
-    "to": "MySQL",
-    "label": "写入会话记录"
-   },
-   {
-    "from": "认证服务",
-    "to": "登录页",
-    "label": "返回令牌与用户",
-    "kind": "return"
-   },
-   {
-    "from": "登录页",
-    "to": "学生",
-    "label": "跳转首页",
-    "kind": "return"
-   }
-  ]
- },
- {
-  "file": "fig5-4.png",
-  "kind": "sequence",
-  "title": "座位可用性查询时序",
-  "participants": [
-   "学生",
-   "选座页",
-   "资源服务",
-   "MySQL"
-  ],
-  "messages": [
-   {
-    "from": "学生",
-    "to": "选座页",
-    "label": "选择日期与时段"
-   },
-   {
-    "from": "选座页",
-    "to": "资源服务",
-    "label": "GET /study-rooms/:id/seats"
-   },
-   {
-    "from": "资源服务",
-    "to": "MySQL",
-    "label": "查询座位与有效预约"
-   },
-   {
-    "from": "MySQL",
-    "to": "资源服务",
-    "label": "座位与占用列表",
-    "kind": "return"
-   },
-   {
-    "from": "资源服务",
-    "to": "选座页",
-    "label": "返回座位状态",
-    "kind": "return"
-   },
-   {
-    "from": "选座页",
-    "to": "学生",
-    "label": "渲染平面图",
-    "kind": "return"
-   }
-  ]
- },
- {
-  "file": "fig5-7.png",
-  "kind": "sequence",
-  "title": "预约创建时序",
-  "participants": [
-   "学生",
-   "确认页",
-   "预约服务",
-   "MySQL"
-  ],
-  "messages": [
-   {
-    "from": "学生",
-    "to": "确认页",
-    "label": "确认座位与时段"
-   },
-   {
-    "from": "确认页",
-    "to": "预约服务",
-    "label": "POST /reservations 携带幂等键"
-   },
-   {
-    "from": "预约服务",
-    "to": "MySQL",
-    "label": "开启事务并按序加锁"
-   },
-   {
-    "self": "预约服务",
-    "label": "区间相交判定与配额校验"
-   },
-   {
-    "from": "MySQL",
-    "to": "预约服务",
-    "label": "资源状态",
-    "kind": "return"
-   },
-   {
-    "from": "预约服务",
-    "to": "MySQL",
-    "label": "校验冲突与配额后写入"
-   },
-   {
-    "from": "MySQL",
-    "to": "预约服务",
-    "label": "提交成功",
-    "kind": "return"
-   },
-   {
-    "from": "预约服务",
-    "to": "确认页",
-    "label": "返回预约详情",
-    "kind": "return"
-   }
-  ]
- },
- {
-  "file": "fig5-9.png",
-  "kind": "sequence",
-  "title": "学生签到时序",
-  "participants": [
-   "学生",
-   "签到页",
-   "签到服务",
-   "MySQL"
-  ],
-  "messages": [
-   {
-    "from": "学生",
-    "to": "签到页",
-    "label": "扫描或上传二维码"
-   },
-   {
-    "from": "签到页",
-    "to": "签到服务",
-    "label": "POST /reservations/:id/check-in"
-   },
-   {
-    "self": "签到服务",
-    "label": "签名校验与窗口判定"
-   },
-   {
-    "from": "签到服务",
-    "to": "MySQL",
-    "label": "验签并校验窗口后写入签到"
-   },
-   {
-    "from": "MySQL",
-    "to": "签到服务",
-    "label": "签到记录",
-    "kind": "return"
-   },
-   {
-    "from": "签到服务",
-    "to": "签到页",
-    "label": "返回已签到",
-    "kind": "return"
    }
   ]
  },

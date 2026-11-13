@@ -173,10 +173,11 @@ def draw_usecase(spec, out):
     uses = spec["usecases"]
     w, h = 1500, max(760, 190 * len(uses))
     img, d = new_canvas(w, h)
-    d.rectangle([30, 30, w - 30, h - 30], outline=LINE, width=2)
+    pass  # 不画外框，与参考用例图一致
     f = font(28, True)
-    title = spec["title"]
-    d.text((56, 44), title, font=f, fill=INK)
+    title = spec.get("title") or ""
+    if title:
+        d.text((56, 44), title, font=f, fill=INK)
 
     ax = 190
     actor_pos = []
