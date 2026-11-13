@@ -713,8 +713,11 @@ def build_docx(md_path, out_path):
 
         m = re.match(r"^\*\*（[一二三四五六]）.*\*\*$", line.strip())
         if m:
-            h = doc.add_paragraph(style="Heading 4")
-            add_inline(h, line.strip().strip("*"), size=12, font=HEI)
+            h = doc.add_paragraph()
+            h.paragraph_format.first_line_indent = Pt(24)
+            h.paragraph_format.space_before = Pt(0)
+            h.paragraph_format.space_after = Pt(0)
+            add_inline(h, line.strip().strip("*"), size=12, font=SONG)
             i += 1
             continue
 

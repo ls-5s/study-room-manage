@@ -18,7 +18,17 @@ $wps.DisplayAlerts = 0
 $doc = $wps.Documents.Open($tmpDocx)
 Start-Sleep -Seconds 2
 
+try { $doc.Repaginate() } catch { }
+Start-Sleep -Milliseconds 800
 try { $doc.Fields.Update() | Out-Null } catch { }
+Start-Sleep -Milliseconds 500
+try {
+    if ($doc.TablesOfContents.Count -gt 0) {
+        $doc.TablesOfContents.Item(1).Update() | Out-Null
+    }
+} catch { }
+Start-Sleep -Seconds 1
+try { $doc.Repaginate() } catch { }
 Start-Sleep -Milliseconds 500
 try {
     if ($doc.TablesOfContents.Count -gt 0) {
