@@ -270,9 +270,10 @@ def three_line_table(doc, rows):
             p = cell.paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.first_line_indent = Pt(0)
-            p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-            p.paragraph_format.space_before = Pt(1)
-            p.paragraph_format.space_after = Pt(1)
+            p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            p.paragraph_format.line_spacing = Pt(23.5)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
             add_inline(p, cell_text, size=10.5)
         if i == 0:
             for cell in table.rows[0].cells:
@@ -291,8 +292,8 @@ def add_caption(doc, text, keep_next=False):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.first_line_indent = Pt(0)
-    p.paragraph_format.space_before = Pt(6)
-    p.paragraph_format.space_after = Pt(9)
+    p.paragraph_format.space_before = Pt(6.3)
+    p.paragraph_format.space_after = Pt(7.2)
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
     if keep_next:
         p.paragraph_format.keep_with_next = True
@@ -792,7 +793,7 @@ def build_docx(md_path, out_path):
             p.paragraph_format.left_indent = Cm(0.65)
             p.paragraph_format.first_line_indent = Cm(-0.65)
             p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-            p.paragraph_format.line_spacing = Pt(22)
+            p.paragraph_format.line_spacing = Pt(23.5)
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
