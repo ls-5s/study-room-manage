@@ -325,14 +325,11 @@ def add_image(doc, path, width_cm=15.5):
         w, h = im.size
     target = width_cm
     path_norm = path.replace("\\", "/")
-    if "screenshots" in path_norm and w and h:
-        # 界面截图按高度 240 pt 排版，避免整页只放一张图
-        target = min(width_cm, 8.47 * w / h)
-    elif w and h and re.search(r"fig4-(?:[4-9]|1[0-3])\.png$", path_norm):
-        # 实体属性图按高度 220 pt，给正文留出行数
+    if w and h and re.search(r"fig4-(?:[4-9]|1[0-3])\.png$", path_norm):
+        # 实体属性图按高度 283.5 pt（参考 275-291）
         target = min(width_cm, 10.0 * w / h)
-    elif w and h and (h / w) * target > 9.53:
-        target = 9.53 * w / h
+    elif w and h and (h / w) * target > 18.3:
+        target = 18.3 * w / h
     run = p.add_run()
     run.add_picture(path, width=Cm(target))
 
