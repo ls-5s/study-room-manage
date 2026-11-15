@@ -3,6 +3,7 @@ import { Sequelize } from 'sequelize';
 import type { DatabaseConfig } from './env.js';
 
 export interface Database {
+  sequelize: Sequelize;
   probe: () => Promise<void>;
   close: () => Promise<void>;
 }
@@ -13,6 +14,7 @@ export function createDatabase(config: DatabaseConfig): Database {
     host: config.host,
     port: config.port,
     logging: false,
+    timezone: '+00:00',
     dialectOptions: { connectTimeout: config.connectTimeoutMs },
     pool: { max: 5, min: 0, acquire: config.acquireTimeoutMs, idle: 10_000 },
   });
@@ -66,5 +68,5 @@ export function createDatabase(config: DatabaseConfig): Database {
     }
   }
 
-  return { probe, close: () => sequelize.close() };
+  return { sequelize, probe, close: () => sequelize.close() };
 }

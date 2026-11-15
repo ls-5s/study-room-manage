@@ -1,14 +1,23 @@
 import cors from 'cors';
 import express from 'express';
+import type { AuthConfig } from './config/env.js';
+import type { Database } from './config/database.js';
 import { createLogger } from './lib/logger.js';
 import type { Logger } from './lib/logger.js';
+import { requestContext } from './lib/request-context.js';
+import { accessLog } from './middleware/access-log.js';
 import { errorHandler, HttpError, notFound } from './middleware/errors.js';
+import { securityHeaders } from './middleware/security-headers.js';
 import { createApiRouter } from './routes/index.js';
-import type { SystemRouteDependencies } from './routes/system.routes.js';
 
-export interface AppDependencies extends SystemRouteDependencies {
+export interface AppDependencies {
+  database: Database;
+  auth: AuthConfig;
   logger?: Logger;
   corsOrigins?: readonly string[];
+  nodeEnv?: 'development' | 'production' | 'test';
+  trustProxy?: number;
+  jobsEnabled?: boolean;
 }
 
 // Creating/importing the app does not read .env, open a DB connection, listen, or register signals.
@@ -17,18 +26,11 @@ export function createApp(dependencies: AppDependencies) {
   const logger = dependencies.logger ?? createLogger();
   const allowedOrigins = new Set(dependencies.corsOrigins ?? []);
   app.disable('x-powered-by');
+  app.set('trust proxy', dependencies.trustProxy ?? 0);
 
-  app.use((request, response, next) => {
-    const started = performance.now();
-    response.once('finish', () => {
-      logger.info('request.completed', {
-        method: request.method,
-        statusCode: response.statusCode,
-        durationMs: Math.round(performance.now() - started),
-      });
-    });
-    next();
-  });
+  app.use(requestContext);
+  app.use(securityHeaders({ production: dependencies.nodeEnv === 'production' }));
+  app.use(accessLog(logger));
 
   app.use(
     cors({
@@ -38,8 +40,18 @@ export function createApp(dependencies: AppDependencies) {
       },
     }),
   );
-  app.use(express.json({ limit: '1mb' }));
-  app.use('/api/v1', createApiRouter({ probeDatabase: dependencies.probeDatabase }));
+  app.use(express.json({ limit: '256kb' }));
+  const api = createApiRouter({
+    database: dependencies.database,
+    auth: dependencies.auth,
+    logger,
+    nodeEnv: dependencies.nodeEnv ?? 'development',
+    trustProxy: dependencies.trustProxy ?? 0,
+    jobsEnabled: dependencies.jobsEnabled ?? true,
+  });
+  app.use('/api/v1', api.router);
+  // The HTTP server owns the lifecycle of background jobs; the app only exposes them.
+  app.locals.jobs = api.jobs;
 
   app.use(notFound);
   app.use(errorHandler(logger));

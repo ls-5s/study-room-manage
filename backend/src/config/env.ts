@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { isLogLevel, type LogLevel } from '../lib/logger.js';
 
 export interface DatabaseConfig {
   host: string;
@@ -18,6 +20,18 @@ export interface ServerConfig {
   nodeEnv: 'development' | 'production' | 'test';
   corsOrigins: string[];
   database: DatabaseConfig;
+  auth: AuthConfig;
+  logLevel: LogLevel;
+  trustProxy: number;
+  jobsEnabled: boolean;
+}
+
+export interface AuthConfig {
+  jwtSecret: string;
+  tokenTtlSeconds: number;
+  bcryptCost: number;
+  /** HMAC key for check-in codes; independent from the JWT secret. */
+  checkInSigningSecret: string;
 }
 
 export class ConfigurationError extends Error {
@@ -68,6 +82,65 @@ function origins(env: NodeJS.ProcessEnv): string[] {
   return [...new Set(values)];
 }
 
+function booleanValue(env: NodeJS.ProcessEnv, key: string, fallback: boolean): boolean {
+  const raw = env[key]?.trim().toLowerCase();
+  if (raw === undefined || raw === '') return fallback;
+  if (raw === 'true' || raw === '1') return true;
+  if (raw === 'false' || raw === '0') return false;
+  throw new ConfigurationError(key);
+}
+
+function checkInSigningSecret(env: NodeJS.ProcessEnv, jwtSecret: string): string {
+  const configured = env.CHECK_IN_SIGNING_SECRET?.trim();
+  if (configured) {
+    if (Buffer.byteLength(configured, 'utf8') < 32) {
+      throw new ConfigurationError('CHECK_IN_SIGNING_SECRET');
+    }
+    return configured;
+  }
+  // Deriving keeps first-run local setups working while still separating the material used
+  // for check-in codes from the raw JWT secret.
+  return createHash('sha256').update(`${jwtSecret}:check-in-token`).digest('hex');
+}
+
+function authConfig(env: NodeJS.ProcessEnv): AuthConfig {
+  const jwtSecret = required(env, 'JWT_SECRET', false);
+  if (Buffer.byteLength(jwtSecret, 'utf8') < 32) {
+    throw new ConfigurationError('JWT_SECRET');
+  }
+
+  const expiresIn = env.JWT_EXPIRES_IN?.trim() ?? '2h';
+  const duration = /^(\d+)(m|h)$/.exec(expiresIn);
+  if (!duration) throw new ConfigurationError('JWT_EXPIRES_IN');
+  const amount = Number(duration[1]);
+  const unit = duration[2];
+  const multiplier = unit === 'h' ? 3_600 : 60;
+  const tokenTtlSeconds = amount * multiplier;
+  if (!Number.isSafeInteger(tokenTtlSeconds) || tokenTtlSeconds < 300 || tokenTtlSeconds > 86_400) {
+    throw new ConfigurationError('JWT_EXPIRES_IN');
+  }
+
+  return {
+    jwtSecret,
+    tokenTtlSeconds,
+    bcryptCost: integer(env, 'BCRYPT_COST', 12, 14),
+    checkInSigningSecret: checkInSigningSecret(env, jwtSecret),
+  };
+}
+
+export function readDatabaseConfig(env: NodeJS.ProcessEnv): DatabaseConfig {
+  return {
+    host: hostname(env, 'DB_HOST', '127.0.0.1'),
+    port: integer(env, 'DB_PORT', 3306),
+    name: required(env, 'DB_NAME'),
+    user: required(env, 'DB_USER'),
+    password: required(env, 'DB_PASSWORD', false),
+    connectTimeoutMs: integer(env, 'DB_CONNECT_TIMEOUT_MS', 5000, 60_000),
+    acquireTimeoutMs: integer(env, 'DB_ACQUIRE_TIMEOUT_MS', 5000, 60_000),
+    probeTimeoutMs: integer(env, 'DB_PROBE_TIMEOUT_MS', 10_000, 60_000),
+  };
+}
+
 // Pure parsing keeps tests and app imports independent from environment files.
 export function readConfig(env: NodeJS.ProcessEnv): ServerConfig {
   const nodeEnv = env.NODE_ENV ?? 'development';
@@ -75,21 +148,19 @@ export function readConfig(env: NodeJS.ProcessEnv): ServerConfig {
     throw new ConfigurationError('NODE_ENV');
   }
 
+  const rawLogLevel = env.LOG_LEVEL?.trim().toLowerCase() ?? 'info';
+  if (!isLogLevel(rawLogLevel)) throw new ConfigurationError('LOG_LEVEL');
+
   return {
     host: hostname(env, 'HOST', '127.0.0.1'),
     port: integer(env, 'PORT', 43080),
     nodeEnv: nodeEnv as ServerConfig['nodeEnv'],
     corsOrigins: origins(env),
-    database: {
-      host: hostname(env, 'DB_HOST', '127.0.0.1'),
-      port: integer(env, 'DB_PORT', 3306),
-      name: required(env, 'DB_NAME'),
-      user: required(env, 'DB_USER'),
-      password: required(env, 'DB_PASSWORD', false),
-      connectTimeoutMs: integer(env, 'DB_CONNECT_TIMEOUT_MS', 5000, 60_000),
-      acquireTimeoutMs: integer(env, 'DB_ACQUIRE_TIMEOUT_MS', 5000, 60_000),
-      probeTimeoutMs: integer(env, 'DB_PROBE_TIMEOUT_MS', 10_000, 60_000),
-    },
+    database: readDatabaseConfig(env),
+    auth: authConfig(env),
+    logLevel: rawLogLevel,
+    trustProxy: integer(env, 'TRUST_PROXY', 0, 10),
+    jobsEnabled: booleanValue(env, 'JOBS_ENABLED', true),
   };
 }
 
@@ -97,4 +168,9 @@ export function loadRuntimeConfig(): ServerConfig {
   // The same relative path works from src/config and compiled dist/config.
   dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)), quiet: true });
   return readConfig(process.env);
+}
+
+export function loadDatabaseConfig(): DatabaseConfig {
+  dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)), quiet: true });
+  return readDatabaseConfig(process.env);
 }

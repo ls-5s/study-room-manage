@@ -1,22 +1,33 @@
-import type { ApiResponse, HealthData, ReadinessData } from '../types/api'
-import { request, RequestError } from '../utils/request'
+import type { AxiosRequestConfig } from 'axios'
+import type { ApiResponse } from '../types/api'
+import type { OperationalSettings, PublicSystemConfig, SystemStatus } from '../types/system'
+import { envelopeData, request } from '../utils/request'
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+export async function getPublicSystemConfig(): Promise<PublicSystemConfig> {
+  const response = await request.get<ApiResponse<PublicSystemConfig>>('/system/public-config', {
+    skipAuth: true,
+  })
+  return envelopeData(response)
 }
 
-export async function checkHealth(signal: AbortSignal): Promise<HealthData> {
-  const { data } = await request.get<ApiResponse<unknown>>('/health', { signal })
-  if (!isRecord(data.data) || data.data.status !== 'ok') {
-    throw new RequestError('invalid-response')
-  }
-  return { status: 'ok' }
+export async function getSystemStatus(signal?: AbortSignal) {
+  const config: AxiosRequestConfig = {}
+  if (signal) config.signal = signal
+  const response = await request.get<ApiResponse<SystemStatus>>('/admin/system/status', config)
+  return envelopeData(response)
 }
 
-export async function checkReadiness(signal: AbortSignal): Promise<ReadinessData> {
-  const { data } = await request.get<ApiResponse<unknown>>('/ready', { signal })
-  if (!isRecord(data.data) || data.data.status !== 'ready' || data.data.database !== 'connected') {
-    throw new RequestError('invalid-response')
-  }
-  return { status: 'ready', database: 'connected' }
+export async function getSystemSettings(): Promise<OperationalSettings> {
+  const response = await request.get<ApiResponse<OperationalSettings>>('/admin/system/settings')
+  return envelopeData(response)
+}
+
+export async function updateSystemSettings(
+  settings: OperationalSettings,
+): Promise<OperationalSettings> {
+  const response = await request.put<ApiResponse<OperationalSettings>>(
+    '/admin/system/settings',
+    settings,
+  )
+  return envelopeData(response)
 }
