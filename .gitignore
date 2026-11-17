@@ -10,5 +10,6 @@ backend/.db-prepare.lock
 *.log
 .playwright-cli/
 output/
+/tmp/
 .DS_Store
 Thumbs.db
