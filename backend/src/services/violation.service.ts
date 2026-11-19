@@ -309,6 +309,9 @@ export class ViolationService {
       if (!user) throw new HttpError(404, 'NOT_FOUND', '用户不存在');
 
       const now = this.now();
+      if (now < violation.occurred_at) {
+        throw new HttpError(409, 'CONFLICT', '违约发生时间晚于当前时间，请先核对历史记录');
+      }
       const [affected] = await this.models.Violation.update(
         {
           status: 'revoked',

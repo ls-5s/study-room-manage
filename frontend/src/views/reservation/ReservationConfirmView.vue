@@ -5,6 +5,7 @@ import { computed, onMounted, shallowRef } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getSeatMap, getStudyRoom } from '../../api/study-room'
 import { createReservation } from '../../api/reservation'
+import { getPublicSystemConfig } from '../../api/system'
 import type { CreateReservationResult } from '../../types/reservation'
 import type { SeatMapSeat, StudyRoomDetail, TimeSlot } from '../../types/study-room'
 import { RequestError } from '../../utils/request'
@@ -28,22 +29,38 @@ const submitError = shallowRef('')
 const conflict = shallowRef(false)
 const submitting = shallowRef(false)
 const created = shallowRef<CreateReservationResult | null>(null)
+const dailyLimit = shallowRef<number | null>(null)
 
 // A fresh key per confirmation page; retries reuse it so a double submit cannot double book.
 const idempotencyKey = crypto.randomUUID()
 
-const ready = computed(() => Boolean(room.value && slot.value && seat.value && reserveDate.value))
+const ready = computed(() =>
+  Boolean(
+    !loading.value &&
+    !loadError.value &&
+    dailyLimit.value !== null &&
+    room.value &&
+    slot.value &&
+    seat.value &&
+    reserveDate.value,
+  ),
+)
 
 async function load() {
   loading.value = true
   loadError.value = ''
+  dailyLimit.value = null
   try {
     if (!roomId.value || !slotId.value || !seatId.value || !reserveDate.value) {
       loadError.value = '预约参数不完整，请重新选择座位'
       return
     }
-    const detail = await getStudyRoom(roomId.value, reserveDate.value)
-    const map = await getSeatMap(roomId.value, reserveDate.value, slotId.value)
+    const [detail, map, config] = await Promise.all([
+      getStudyRoom(roomId.value, reserveDate.value),
+      getSeatMap(roomId.value, reserveDate.value, slotId.value),
+      getPublicSystemConfig(),
+    ])
+    dailyLimit.value = config.reservationDailyLimit
     room.value = detail
     slot.value = detail.timeSlots.find((item) => item.id === slotId.value) ?? null
     seat.value = map.seats.find((item) => item.id === seatId.value) ?? null
@@ -170,7 +187,7 @@ onMounted(() => {
         <section class="rules">
           <h2>预约规则</h2>
           <ul>
-            <li>每位学生每日最多保留 2 条有效预约。</li>
+            <li v-if="dailyLimit !== null">每位学生每日最多保留 {{ dailyLimit }} 条有效预约。</li>
             <li>签到窗口为预约开始前 30 分钟至开始后 15 分钟，超时未签到记为失约。</li>
             <li>预约开始前可以自行取消；开始后如需取消请联系管理员。</li>
             <li>同一时间不能重复预约，座位提交后以服务端校验结果为准。</li>

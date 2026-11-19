@@ -1,7 +1,7 @@
 import type { Logger } from '../lib/logger.js';
 import { addBusinessDays, toBusinessDate } from '../lib/study-room-time.js';
 import type { StatisticsService } from '../services/statistics.service.js';
-import { SnapshotPendingError } from '../services/statistics.repository.js';
+import type { StatisticsCoverage } from '../services/statistics.service.js';
 import type { ReservationStateJob } from './reservation-state.job.js';
 import type { JobRuntimeStatus } from '../types/jobs.js';
 
@@ -34,10 +34,14 @@ export class StatisticsJob {
   private lastDurationMs: number | null = null;
   private consecutiveFailures = 0;
   private lastErrorName: string | null = null;
+  private coverage: StatisticsCoverage | null = null;
 
   constructor(
-    private readonly statistics: StatisticsService,
-    private readonly reservationState: ReservationStateJob,
+    private readonly statistics: Pick<
+      StatisticsService,
+      'refreshCurrentDay' | 'finalizeHistory' | 'coverage'
+    >,
+    private readonly reservationState: Pick<ReservationStateJob, 'run'>,
     options: StatisticsJobOptions = {},
   ) {
     this.now = options.now ?? (() => new Date());
@@ -48,18 +52,13 @@ export class StatisticsJob {
     const today = toBusinessDate(now);
     await this.statistics.refreshCurrentDay(today);
 
-    if (!isFinalizationWindow(now)) return;
-    const yesterday = addBusinessDays(today, -1);
-    await this.reservationState.run(now);
     try {
-      const changed = await this.statistics.finalize(yesterday);
-      if (changed) this.logger?.info('statistics.finalized', { statDate: yesterday });
-    } catch (error) {
-      if (error instanceof SnapshotPendingError) {
-        this.logger?.info('statistics.finalize_pending', { statDate: yesterday });
-        return;
+      if (isFinalizationWindow(now)) {
+        await this.reservationState.run(now);
+        await this.statistics.finalizeHistory(today);
       }
-      throw error;
+    } finally {
+      this.coverage = await this.statistics.coverage(addBusinessDays(today, -6), today);
     }
   }
 
@@ -91,6 +90,7 @@ export class StatisticsJob {
       lastDurationMs: this.lastDurationMs,
       consecutiveFailures: this.consecutiveFailures,
       lastErrorName: this.lastErrorName,
+      statisticsCoverage: this.coverage,
     };
   }
 

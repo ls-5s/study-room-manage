@@ -47,6 +47,14 @@ export interface StatisticsTrend {
   timezone: 'Asia/Shanghai'
   generatedAt: string
   items: StatisticsTrendItem[]
+  coverage: StatisticsCoverage
+}
+
+export interface StatisticsCoverage {
+  availableDates: string[]
+  missingDates: string[]
+  pendingDates: string[]
+  isComplete: boolean
 }
 
 export interface StatisticsTrendQuery {

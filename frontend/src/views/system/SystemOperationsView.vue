@@ -19,6 +19,7 @@ import type {
 } from '../../types/system'
 import { RequestError } from '../../utils/request'
 import { formatDateTime } from '../../utils/reservation'
+import { statisticsCoverageMessage } from '../../utils/statistics'
 
 const auth = useAuthStore()
 const status = shallowRef<SystemStatus | null>(null)
@@ -324,6 +325,13 @@ onBeforeUnmount(() => {
         <el-table-column prop="consecutiveFailures" label="连续失败" width="90" />
         <el-table-column label="最近错误" min-width="130">
           <template #default="{ row }">{{ row.lastErrorName || '—' }}</template>
+        </el-table-column>
+        <el-table-column label="近七天统计完整性" min-width="260">
+          <template #default="{ row }">
+            {{
+              row.name === 'statistics' ? statisticsCoverageMessage(row.statisticsCoverage) : '—'
+            }}
+          </template>
         </el-table-column>
         <template #empty>
           <el-empty description="当前没有可显示的后台任务" :image-size="72" />

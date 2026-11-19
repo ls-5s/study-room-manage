@@ -7,6 +7,7 @@ import { createStatisticsModels } from '../src/models/statistics-models.js';
 import { createStudyRoomModels } from '../src/models/study-room-models.js';
 import { StatisticsRepository } from '../src/services/statistics.repository.js';
 import { StatisticsService } from '../src/services/statistics.service.js';
+import { seedTodayStatistics } from './seed-today-statistics.js';
 
 function minutesBetween(start: string, end: string): number {
   const toMinutes = (value: string) => {
@@ -42,6 +43,8 @@ async function main() {
 
     for (let daysAgo = 6; daysAgo >= 1; daysAgo -= 1) {
       const statDate = addBusinessDays(today, -daysAgo);
+      // 已有快照属于历史记录，重复运行时不改写。
+      if (await repository.findRun(statDate)) continue;
       await service.ensureCapacity(statDate);
       const [demoRooms, demoSlots, demoSeats] = await Promise.all([
         roomModels.StudyRoom.findAll({ where: { status: 'open' } }),
@@ -126,12 +129,12 @@ async function main() {
       seededDays += 1;
     }
 
+    const seededReservations = await seedTodayStatistics(reservationModels, now);
     await service.refreshCurrentDay(today);
     console.info(
-      seededDays > 0
-        ? `统计演示数据已创建：最近 7 天（新增历史快照 ${seededDays} 天）`
-        : '统计演示历史快照已存在；今日实时数据已刷新',
+      `统计演示数据已补充：新增历史快照 ${seededDays} 天，今日预约 ${seededReservations} 场。`,
     );
+    console.info('历史快照为演示数据；今日指标从带“统计演示”标记的预约记录实时聚合。');
   } finally {
     await database.close();
   }

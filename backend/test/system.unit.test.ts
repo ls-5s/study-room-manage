@@ -6,6 +6,29 @@ import { createDynamicUserRateLimiter } from '../src/lib/user-rate-limit.js';
 import { currentRequestId, requestContext } from '../src/lib/request-context.js';
 import { securityHeaders } from '../src/middleware/security-headers.js';
 import { validateOperationalSettings } from '../src/services/operational-settings.service.js';
+import type {
+  OperationalSettingsService,
+  OperationalSettingsView,
+} from '../src/services/operational-settings.service.js';
+import { SystemService } from '../src/services/system.service.js';
+
+test('公开预约配置返回实际每日上限，并跟随配置变更', async () => {
+  let dailyLimit = 5;
+  const settings = {
+    getAll: async () =>
+      ({ reservation: { advanceDays: 7, dailyLimit } }) as OperationalSettingsView,
+  };
+  const service = new SystemService(settings as OperationalSettingsService, {
+    nodeEnv: 'test',
+    trustProxy: 0,
+    jobsEnabled: false,
+    jobs: [],
+    probeDatabase: async () => {},
+  });
+  assert.equal((await service.publicConfig()).reservationDailyLimit, 5);
+  dailyLimit = 1;
+  assert.equal((await service.publicConfig()).reservationDailyLimit, 1);
+});
 
 const baseEnv = {
   JWT_SECRET: 'a'.repeat(40),

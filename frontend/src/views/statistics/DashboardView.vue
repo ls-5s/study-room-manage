@@ -20,7 +20,12 @@ import type {
 import { RequestError } from '../../utils/request'
 import { formatDateTime } from '../../utils/reservation'
 import { addDays, businessToday } from '../../utils/study-room'
-import { formatMetricRate, formatRate } from '../../utils/statistics'
+import {
+  formatMetricRate,
+  formatRate,
+  statisticsCoverageMessage,
+  statisticsChartItems,
+} from '../../utils/statistics'
 
 const today = businessToday()
 const selectedDate = shallowRef(today)
@@ -29,7 +34,15 @@ const dayTrend = shallowRef<StatisticsTrend | null>(null)
 const roomTrend = shallowRef<StatisticsTrend | null>(null)
 const slotTrend = shallowRef<StatisticsTrend | null>(null)
 const loading = shallowRef(false)
-const error = shallowRef('')
+const loadErrors = shallowRef({ overview: '', day: '', room: '', slot: '' })
+const error = computed(() => Object.values(loadErrors.value).filter(Boolean).join('；'))
+const coverageWarnings = computed(() => [
+  ...new Set(
+    [dayTrend.value, roomTrend.value, slotTrend.value]
+      .filter((trend): trend is StatisticsTrend => Boolean(trend && !trend.coverage.isComplete))
+      .map((trend) => statisticsCoverageMessage(trend.coverage)),
+  ),
+])
 let controller: AbortController | null = null
 let loadSequence = 0
 
@@ -37,7 +50,7 @@ const trendDateFrom = computed(() => addDays(selectedDate.value, -6))
 const metricCards = computed(() => [
   {
     label: '预约场次',
-    value: overview.value?.cards.reservationCount ?? 0,
+    value: overview.value?.cards.reservationCount ?? '—',
     suffix: '场',
     hint: '不含取消预约',
     icon: Calendar,
@@ -45,7 +58,7 @@ const metricCards = computed(() => [
   },
   {
     label: '已签到',
-    value: overview.value?.cards.checkedInCount ?? 0,
+    value: overview.value?.cards.checkedInCount ?? '—',
     suffix: '场',
     hint: `签到率 ${formatRate(
       overview.value?.rates.signInRate ?? 0,
@@ -56,7 +69,7 @@ const metricCards = computed(() => [
   },
   {
     label: '失约',
-    value: overview.value?.cards.noShowCount ?? 0,
+    value: overview.value?.cards.noShowCount ?? '—',
     suffix: '场',
     hint: `失约率 ${formatRate(
       overview.value?.rates.noShowRate ?? 0,
@@ -67,10 +80,12 @@ const metricCards = computed(() => [
   },
   {
     label: '座位利用率',
-    value: formatRate(
-      overview.value?.cards.utilizationRate ?? 0,
-      overview.value?.rates.hasUtilizationData ?? false,
-    ),
+    value: overview.value
+      ? formatRate(
+          overview.value?.cards.utilizationRate ?? 0,
+          overview.value?.rates.hasUtilizationData ?? false,
+        )
+      : '—',
     suffix: '',
     hint: '已签到预约计划时长 / 计划容量',
     icon: TrendCharts,
@@ -82,7 +97,7 @@ const colors = useChartTheme()
 const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const dayChartOption = computed<EChartsCoreOption>(() => {
-  const items = dayTrend.value?.items ?? []
+  const items = statisticsChartItems(dayTrend.value)
   return {
     animation: animate,
     color: [colors.value.primary, colors.value.success],
@@ -119,7 +134,7 @@ const dayChartOption = computed<EChartsCoreOption>(() => {
         type: 'line',
         smooth: 0.28,
         symbolSize: 7,
-        data: items.map((item) => item.reservationCount),
+        data: items.map((item) => item.reservationCount ?? null),
         areaStyle: { opacity: 0.08 },
       },
       {
@@ -127,14 +142,14 @@ const dayChartOption = computed<EChartsCoreOption>(() => {
         type: 'line',
         smooth: 0.28,
         symbolSize: 7,
-        data: items.map((item) => item.checkedInCount),
+        data: items.map((item) => item.checkedInCount ?? null),
       },
     ],
   }
 })
 
 const rateChartOption = computed<EChartsCoreOption>(() => {
-  const items = dayTrend.value?.items ?? []
+  const items = statisticsChartItems(dayTrend.value)
   return {
     animation: animate,
     color: [colors.value.success, colors.value.danger],
@@ -167,7 +182,7 @@ const rateChartOption = computed<EChartsCoreOption>(() => {
         type: 'bar',
         barMaxWidth: 24,
         data: items.map((item) =>
-          item.hasSettledData ? Number((item.signInRate * 100).toFixed(1)) : 0,
+          item.hasSettledData ? Number(((item.signInRate ?? 0) * 100).toFixed(1)) : null,
         ),
       },
       {
@@ -175,7 +190,7 @@ const rateChartOption = computed<EChartsCoreOption>(() => {
         type: 'line',
         symbolSize: 7,
         data: items.map((item) =>
-          item.hasSettledData ? Number((item.noShowRate * 100).toFixed(1)) : 0,
+          item.hasSettledData ? Number(((item.noShowRate ?? 0) * 100).toFixed(1)) : null,
         ),
       },
     ],
@@ -262,7 +277,7 @@ const slotChartOption = computed<EChartsCoreOption>(() => {
         name: '预约场次',
         type: 'bar',
         barMaxWidth: 28,
-        data: items.map((item) => item.reservationCount),
+        data: items.map((item) => item.reservationCount ?? null),
       },
     ],
   }
@@ -284,28 +299,36 @@ async function load() {
   controller = new AbortController()
   const current = ++loadSequence
   loading.value = true
-  error.value = ''
+  loadErrors.value = { overview: '', day: '', room: '', slot: '' }
+  overview.value = null
+  dayTrend.value = null
+  roomTrend.value = null
+  slotTrend.value = null
   const range = { dateFrom: trendDateFrom.value, dateTo: selectedDate.value }
   try {
-    const [overviewResult, dayResult, roomResult, slotResult] = await Promise.all([
+    const [overviewResult, dayResult, roomResult, slotResult] = await Promise.allSettled([
       getStatisticsOverview(selectedDate.value, controller.signal),
       getStatisticsTrend({ ...range, groupBy: 'day' }, controller.signal),
       getStatisticsTrend({ ...range, groupBy: 'room' }, controller.signal),
       getStatisticsTrend({ ...range, groupBy: 'slot' }, controller.signal),
     ])
     if (current !== loadSequence) return
-    overview.value = overviewResult
-    dayTrend.value = dayResult
-    roomTrend.value = roomResult
-    slotTrend.value = slotResult
-  } catch (cause) {
-    if (cause instanceof RequestError && cause.kind === 'cancel') return
-    if (current !== loadSequence) return
-    overview.value = null
-    dayTrend.value = null
-    roomTrend.value = null
-    slotTrend.value = null
-    error.value = cause instanceof RequestError ? cause.message : '统计数据加载失败'
+    overview.value = overviewResult.status === 'fulfilled' ? overviewResult.value : null
+    dayTrend.value = dayResult.status === 'fulfilled' ? dayResult.value : null
+    roomTrend.value = roomResult.status === 'fulfilled' ? roomResult.value : null
+    slotTrend.value = slotResult.status === 'fulfilled' ? slotResult.value : null
+    const message = (result: PromiseSettledResult<unknown>, label: string) => {
+      if (result.status === 'fulfilled') return ''
+      const cause: unknown = result.reason
+      if (cause instanceof RequestError && cause.kind === 'cancel') return ''
+      return `${label}不可用：${cause instanceof RequestError ? cause.message : '加载失败'}`
+    }
+    loadErrors.value = {
+      overview: message(overviewResult, '概览'),
+      day: message(dayResult, '按日趋势'),
+      room: message(roomResult, '房间趋势'),
+      slot: message(slotResult, '时段趋势'),
+    }
   } finally {
     if (current === loadSequence) loading.value = false
   }
@@ -363,6 +386,15 @@ onBeforeUnmount(() => {
       </template>
     </el-alert>
 
+    <el-alert
+      v-for="warning in coverageWarnings"
+      :key="warning"
+      type="warning"
+      :title="warning"
+      :closable="false"
+      show-icon
+    />
+
     <div v-loading="loading" class="metric-grid">
       <article
         v-for="card in metricCards"
@@ -378,7 +410,7 @@ onBeforeUnmount(() => {
           <strong
             >{{ card.value }}<small>{{ card.suffix }}</small></strong
           >
-          <p>{{ card.hint }}</p>
+          <p>{{ overview ? card.hint : loading ? '加载中' : '概览数据不可用' }}</p>
         </div>
       </article>
     </div>
@@ -387,7 +419,15 @@ onBeforeUnmount(() => {
       <span>
         <el-icon><DataLine /></el-icon>
         数据状态：
-        <strong>{{ overview?.dataStatus === 'live' ? '实时聚合' : '历史冻结' }}</strong>
+        <strong>{{
+          !overview
+            ? loading
+              ? '加载中'
+              : '不可用'
+            : overview.dataStatus === 'live'
+              ? '实时聚合'
+              : '历史冻结'
+        }}</strong>
       </span>
       <span v-if="overview?.finalizedAt"> 冻结于 {{ formatDateTime(overview.finalizedAt) }} </span>
       <span v-else-if="overview">更新于 {{ formatDateTime(overview.generatedAt) }}</span>
@@ -414,6 +454,7 @@ onBeforeUnmount(() => {
           :option="dayChartOption"
           label="近七天预约与签到趋势图"
           :empty="!hasDayChartData"
+          :empty-text="loadErrors.day || '所选区间暂无预约数据'"
           height="330px"
         />
       </article>
@@ -431,7 +472,7 @@ onBeforeUnmount(() => {
           label="近七天签到率与失约率图表"
           :empty="!hasRateChartData"
           height="330px"
-          empty-text="所选区间暂无已结算预约"
+          :empty-text="loadErrors.day || '所选区间暂无已结算预约'"
         />
       </article>
 
@@ -447,6 +488,7 @@ onBeforeUnmount(() => {
           :option="roomChartOption"
           label="自习室利用率排行图"
           :empty="!hasRoomChartData"
+          :empty-text="loadErrors.room || '所选区间暂无可用容量数据'"
           height="300px"
         />
       </article>
@@ -463,6 +505,7 @@ onBeforeUnmount(() => {
           :option="slotChartOption"
           label="开放时段预约分布图"
           :empty="!hasSlotChartData"
+          :empty-text="loadErrors.slot || '所选区间暂无时段数据'"
           height="300px"
         />
       </article>

@@ -2,6 +2,7 @@ export interface PublicSystemConfig {
   timezone: 'Asia/Shanghai'
   businessDate: string
   bookingWindowDays: number
+  reservationDailyLimit: number
 }
 
 export type JobState = 'idle' | 'running' | 'success' | 'error'
@@ -14,6 +15,7 @@ export interface SystemJobStatus {
   lastDurationMs: number | null
   consecutiveFailures: number
   lastErrorName: string | null
+  statisticsCoverage?: import('./statistics').StatisticsCoverage
 }
 
 export interface SystemStatus {

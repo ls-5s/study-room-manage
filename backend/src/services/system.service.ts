@@ -35,6 +35,7 @@ export class SystemService {
       timezone: 'Asia/Shanghai' as const,
       businessDate: toBusinessDate(this.now()),
       bookingWindowDays: settings.reservation.advanceDays,
+      reservationDailyLimit: settings.reservation.dailyLimit,
     };
   }
 
@@ -77,6 +78,7 @@ export class SystemService {
           lastDurationMs: status.lastDurationMs,
           consecutiveFailures: status.consecutiveFailures,
           lastErrorName: status.lastErrorName,
+          ...(status.statisticsCoverage ? { statisticsCoverage: status.statisticsCoverage } : {}),
         };
       }),
     };

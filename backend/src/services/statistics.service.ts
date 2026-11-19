@@ -59,6 +59,14 @@ export interface StatisticsTrend {
   timezone: typeof STATISTICS_TIMEZONE;
   generatedAt: string;
   items: StatisticsTrendItem[];
+  coverage: StatisticsCoverage;
+}
+
+export interface StatisticsCoverage {
+  availableDates: string[];
+  missingDates: string[];
+  pendingDates: string[];
+  isComplete: boolean;
 }
 
 interface DateRange {
@@ -222,6 +230,7 @@ function csvCell(value: string | number): string {
 export function buildStatisticsCsv(
   items: readonly StatisticsTrendItem[],
   groupBy: StatisticsGroupBy,
+  coverage?: StatisticsCoverage,
 ): string {
   const groupLabel = groupBy === 'day' ? '日期' : groupBy === 'room' ? '房间' : '时段';
   const lines = [
@@ -235,6 +244,10 @@ export function buildStatisticsCsv(
       '签到率',
       '失约率',
       '利用率',
+      '数据完整性',
+      '可用日期',
+      '缺失日期',
+      '待结算日期',
     ],
     ...items.map((item) => [
       groupLabel,
@@ -246,8 +259,33 @@ export function buildStatisticsCsv(
       item.hasSettledData ? item.signInRate.toFixed(4) : '',
       item.hasSettledData ? item.noShowRate.toFixed(4) : '',
       item.hasUtilizationData ? item.utilizationRate.toFixed(4) : '',
+      ...(coverage
+        ? [
+            coverage.isComplete ? '完整' : '仅含可用日期',
+            coverage.availableDates.join('、'),
+            coverage.missingDates.join('、'),
+            coverage.pendingDates.join('、'),
+          ]
+        : ['', '', '', '']),
     ]),
   ];
+  if (items.length === 0 && coverage) {
+    lines.push([
+      groupLabel,
+      '无可用统计数据',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      coverage.isComplete ? '完整' : '仅含可用日期',
+      coverage.availableDates.join('、'),
+      coverage.missingDates.join('、'),
+      coverage.pendingDates.join('、'),
+    ]);
+  }
   return `\uFEFF${lines.map((line) => line.map(csvCell).join(',')).join('\r\n')}\r\n`;
 }
 
@@ -267,12 +305,43 @@ export class StatisticsService {
   }
 
   async finalize(statDate: string): Promise<boolean> {
-    try {
-      return await this.repository.finalize(statDate, this.now());
-    } catch (error) {
-      if (error instanceof SnapshotPendingError) throw error;
-      throw error;
+    return this.repository.finalize(statDate, this.now());
+  }
+
+  async finalizeHistory(beforeDate: string): Promise<void> {
+    const runs = await this.repository.listUnfinalizedRuns(beforeDate);
+    let pending: SnapshotPendingError | undefined;
+    for (const run of runs) {
+      try {
+        await this.finalize(run.stat_date);
+      } catch (error) {
+        if (!(error instanceof SnapshotPendingError)) throw error;
+        pending ??= error;
+      }
     }
+    // Finish other dates even if one date still has unsettled reservations.
+    if (pending) throw pending;
+  }
+
+  async coverage(dateFrom: string, dateTo: string): Promise<StatisticsCoverage> {
+    const runs = await this.repository.listRuns(dateFrom, dateTo);
+    const byDate = new Map(runs.map((run) => [run.stat_date, run]));
+    const today = toBusinessDate(this.now());
+    const availableDates: string[] = [];
+    const missingDates: string[] = [];
+    const pendingDates: string[] = [];
+    for (let date = dateFrom; date <= dateTo; date = addBusinessDays(date, 1)) {
+      const run = byDate.get(date);
+      if (!run) missingDates.push(date);
+      else if (date < today && !run.finalized_at) pendingDates.push(date);
+      else availableDates.push(date);
+    }
+    return {
+      availableDates,
+      missingDates,
+      pendingDates,
+      isComplete: missingDates.length === 0 && pendingDates.length === 0,
+    };
   }
 
   async overview(date: string): Promise<StatisticsOverview> {
@@ -311,15 +380,22 @@ export class StatisticsService {
     groupBy: StatisticsGroupBy,
     roomId?: string,
   ): Promise<StatisticsTrend> {
-    await this.assertRangeReady(dateFrom, dateTo);
+    const coverage = await this.coverage(dateFrom, dateTo);
+    const available = new Set(coverage.availableDates);
     const metrics = await this.repository.listMetrics(dateFrom, dateTo, roomId);
+    const items = groupStatisticsMetrics(
+      metrics.filter((metric) => available.has(metric.stat_date)),
+      groupBy,
+      { dateFrom, dateTo },
+    ).filter((item) => groupBy !== 'day' || available.has(item.key));
     return {
       dateFrom,
       dateTo,
       groupBy,
       timezone: STATISTICS_TIMEZONE,
       generatedAt: toBusinessIso(this.now()),
-      items: groupStatisticsMetrics(metrics, groupBy, { dateFrom, dateTo }),
+      items,
+      coverage,
     };
   }
 

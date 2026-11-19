@@ -22,6 +22,8 @@ import {
   statisticsGroupLabel,
   statisticsGroupOptions,
   statisticsRangeLabel,
+  statisticsCoverageMessage,
+  statisticsChartItems,
 } from '../../utils/statistics'
 
 const today = businessToday()
@@ -53,7 +55,7 @@ const colors = useChartTheme()
 const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const countChartOption = computed<EChartsCoreOption>(() => {
-  const items = trend.value?.items ?? []
+  const items = statisticsChartItems(trend.value)
   return {
     animation: animate,
     color: [colors.value.primary, colors.value.success, colors.value.danger],
@@ -87,26 +89,26 @@ const countChartOption = computed<EChartsCoreOption>(() => {
         name: '预约场次',
         type: 'bar',
         barMaxWidth: 26,
-        data: items.map((item) => item.reservationCount),
+        data: items.map((item) => item.reservationCount ?? null),
       },
       {
         name: '已签到',
         type: 'bar',
         barMaxWidth: 26,
-        data: items.map((item) => item.checkedInCount),
+        data: items.map((item) => item.checkedInCount ?? null),
       },
       {
         name: '失约',
         type: 'bar',
         barMaxWidth: 26,
-        data: items.map((item) => item.noShowCount),
+        data: items.map((item) => item.noShowCount ?? null),
       },
     ],
   }
 })
 
 const rateChartOption = computed<EChartsCoreOption>(() => {
-  const items = trend.value?.items ?? []
+  const items = statisticsChartItems(trend.value)
   return {
     animation: animate,
     color: [colors.value.success, colors.value.danger],
@@ -144,7 +146,7 @@ const rateChartOption = computed<EChartsCoreOption>(() => {
         smooth: 0.24,
         symbolSize: 7,
         data: items.map((item) =>
-          item.hasSettledData ? Number((item.signInRate * 100).toFixed(1)) : 0,
+          item.hasSettledData ? Number(((item.signInRate ?? 0) * 100).toFixed(1)) : null,
         ),
       },
       {
@@ -153,7 +155,7 @@ const rateChartOption = computed<EChartsCoreOption>(() => {
         smooth: 0.24,
         symbolSize: 7,
         data: items.map((item) =>
-          item.hasSettledData ? Number((item.noShowRate * 100).toFixed(1)) : 0,
+          item.hasSettledData ? Number(((item.noShowRate ?? 0) * 100).toFixed(1)) : null,
         ),
       },
     ],
@@ -267,7 +269,7 @@ onBeforeUnmount(() => {
           type="primary"
           :icon="Download"
           :loading="exporting"
-          :disabled="exporting || loading || !trend?.items.length"
+          :disabled="exporting || loading || !trend"
           @click="exportReport"
         >
           {{ exporting ? '正在导出…' : '导出当前结果' }}
@@ -316,6 +318,14 @@ onBeforeUnmount(() => {
         <el-button link type="primary" @click="load">重新加载</el-button>
       </template>
     </el-alert>
+
+    <el-alert
+      v-if="trend && !trend.coverage.isComplete"
+      type="warning"
+      :title="statisticsCoverageMessage(trend.coverage)"
+      :closable="false"
+      show-icon
+    />
 
     <div v-if="loading && !trend" v-loading="loading" class="loading-panel" />
 

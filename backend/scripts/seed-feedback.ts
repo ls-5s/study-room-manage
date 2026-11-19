@@ -54,7 +54,7 @@ function hoursAgo(now: Date, hours: number): Date {
   return new Date(now.getTime() - hours * 60 * 60_000);
 }
 
-function buildDemoTickets(now: Date): DemoTicket[] {
+function buildDemoTickets(now: Date, seatNo: string): DemoTicket[] {
   const processingAt = hoursAgo(now, 2);
   const resolvedProcessingAt = hoursAgo(now, 23);
   const resolvedAt = hoursAgo(now, 22);
@@ -63,7 +63,7 @@ function buildDemoTickets(now: Date): DemoTicket[] {
   return [
     {
       type: 'occupied_seat',
-      description: 'A-03 座位从上午开始一直放着书本和水杯，现场无人使用，希望管理员协助核实。',
+      description: `${seatNo} 座位从上午开始一直放着书本和水杯，现场无人使用，希望管理员协助核实。`,
       status: 'pending',
       createdAt: hoursAgo(now, 0.5),
       processedAt: null,
@@ -255,7 +255,7 @@ async function main() {
     if (existing === 0) {
       const now = new Date();
       await database.sequelize.transaction(async (transaction) => {
-        for (const demo of buildDemoTickets(now)) {
+        for (const demo of buildDemoTickets(now, seat.seat_no)) {
           const ticket = await models.FeedbackTicket.create(
             {
               user_id: String(student.id),

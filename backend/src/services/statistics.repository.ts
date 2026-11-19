@@ -56,6 +56,13 @@ export class StatisticsRepository {
     });
   }
 
+  async listUnfinalizedRuns(beforeDate: string): Promise<DailyStatisticsRun[]> {
+    return this.models.DailyStatisticsRun.findAll({
+      where: { stat_date: { [Op.lt]: beforeDate }, finalized_at: null },
+      order: [['stat_date', 'ASC']],
+    });
+  }
+
   async listMetrics(dateFrom: string, dateTo: string, roomId?: string): Promise<DailySlotMetric[]> {
     return this.models.DailySlotMetric.findAll({
       where: {

@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
         <p class="page-eyebrow">学生服务 / 自习室</p>
         <h1 id="home-title">找到一间适合专注的自习室</h1>
         <p class="hero-summary">
-          按名称、位置或时间范围筛选开放空间，再进入座位平面图选择具体座位。
+          按名称、位置或完整开放时段筛选自习室，再进入座位平面图选择具体座位。
         </p>
       </div>
       <div class="hero-stat">
@@ -126,7 +126,15 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <el-form class="filter-panel toolbar-panel" :model="filters" @submit.prevent="search">
+    <p id="time-filter-help" class="filter-note">
+      按时段查询时，日期、开始时间和结束时间须同时填写；起止时间须与自习室的一个完整开放时段一致。三项均留空可查看全部自习室。
+    </p>
+    <el-form
+      class="filter-panel toolbar-panel"
+      :model="filters"
+      aria-describedby="time-filter-help"
+      @submit.prevent="search"
+    >
       <el-form-item label="名称或位置">
         <el-input
           v-model="filters.keyword"
@@ -141,7 +149,7 @@ onBeforeUnmount(() => {
           type="date"
           value-format="YYYY-MM-DD"
           format="YYYY-MM-DD"
-          placeholder="可选"
+          placeholder="按时段查询时必选"
           style="width: 100%"
         />
       </el-form-item>
@@ -151,7 +159,7 @@ onBeforeUnmount(() => {
           start="06:00"
           end="22:00"
           step="00:30"
-          placeholder="可选"
+          placeholder="开放时段开始时间"
           style="width: 100%"
         />
       </el-form-item>
@@ -161,7 +169,7 @@ onBeforeUnmount(() => {
           start="06:30"
           end="23:00"
           step="00:30"
-          placeholder="可选"
+          placeholder="开放时段结束时间"
           style="width: 100%"
         />
       </el-form-item>
@@ -171,8 +179,8 @@ onBeforeUnmount(() => {
       </div>
     </el-form>
     <el-alert v-if="filterError" type="warning" :title="filterError" :closable="false" show-icon />
-    <p v-if="hasTimeFilter" class="filter-note">
-      已按指定时段计算动态余量；当前预约模块尚未接入时，动态余量与静态可用座位一致。
+    <p v-if="hasTimeFilter && !filterError" class="filter-note">
+      查询结果中的剩余座位按所选日期与完整开放时段计算，提交预约时会再次核对余量。
     </p>
 
     <el-alert v-if="error" type="error" :title="error" :closable="false" show-icon>

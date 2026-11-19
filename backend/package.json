@@ -22,6 +22,7 @@
     "db:seed:rooms": "tsx scripts/seed-study-rooms.ts",
     "db:seed:feedback": "tsx scripts/seed-feedback.ts",
     "db:seed:statistics": "tsx scripts/seed-statistics.ts",
+    "db:repair:demo": "tsx scripts/repair-demo-data.ts",
     "test": "tsx --test test/study-room.unit.test.ts test/reservation.unit.test.ts test/violation.unit.test.ts test/feedback.unit.test.ts test/statistics.unit.test.ts test/system.unit.test.ts",
     "jobs:reservation-state": "tsx scripts/run-reservation-job.ts",
     "violations:reconcile": "tsx scripts/reconcile-violations.ts",

@@ -8,6 +8,7 @@ export interface JobRuntimeStatus {
   lastDurationMs: number | null;
   consecutiveFailures: number;
   lastErrorName: string | null;
+  statisticsCoverage?: import('../services/statistics.service.js').StatisticsCoverage | null;
 }
 
 export interface ServerJob {

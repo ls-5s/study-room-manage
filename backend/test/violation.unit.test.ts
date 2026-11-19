@@ -5,10 +5,41 @@ import {
   validateRulesInput,
   DEFAULT_RESTRICTION_DAYS,
   DEFAULT_THRESHOLD,
+  ViolationService,
 } from '../src/services/violation.service.js';
+import type { ViolationModels } from '../src/models/violation-models.js';
+import type { SettingsService } from '../src/services/settings.service.js';
+import { HttpError } from '../src/middleware/errors.js';
 
 const DAY = 24 * 60 * 60 * 1_000;
 const occurredAt = new Date('2026-11-11T08:15:00+08:00');
+
+test('拒绝在违约发生之前撤销，避免写入倒置的时间线', async () => {
+  let writes = 0;
+  const service = new ViolationService(
+    {
+      Violation: {
+        sequelize: {
+          transaction: async (callback: (transaction: unknown) => unknown) =>
+            callback({ LOCK: { UPDATE: 'UPDATE' } }),
+        },
+        findByPk: async () => ({ status: 'active', user_id: '13', occurred_at: occurredAt }),
+        update: async () => {
+          writes += 1;
+          return [1];
+        },
+      },
+      User: { findByPk: async () => ({ id: '13' }) },
+    } as unknown as ViolationModels,
+    {} as SettingsService,
+    { now: () => new Date(occurredAt.getTime() - 1) },
+  );
+  await assert.rejects(
+    service.revoke('10', '3', '核对演示时间线'),
+    (error: unknown) => error instanceof HttpError && error.statusCode === 409,
+  );
+  assert.equal(writes, 0);
+});
 
 test('未达到阈值时不产生限制', () => {
   const result = computeRestriction({

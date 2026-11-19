@@ -77,7 +77,7 @@ export function createStatisticsController(
         query.groupBy,
         query.roomId,
       );
-      const csv = buildStatisticsCsv(result.items, result.groupBy);
+      const csv = buildStatisticsCsv(result.items, result.groupBy, result.coverage);
       response
         .status(200)
         .set({

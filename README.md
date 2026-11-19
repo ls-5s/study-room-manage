@@ -105,6 +105,8 @@ pnpm dev
 - 前端：<http://localhost:43081/home>
 - 健康检查：`GET http://127.0.0.1:43080/api/v1/health`、`GET /api/v1/ready`
 
+本地演示需要仪表盘数据时，运行 `pnpm --dir backend db:seed:statistics`：补充最近六天缺失的演示统计快照，以及今天带“统计演示”标记的预约、签到和失约记录，再刷新当天统计。重复执行会跳过已有快照和演示预约；演示学生账号默认禁用。历史快照是用于展示图表的模拟数据。
+
 ## 项目结构
 
 ```text
