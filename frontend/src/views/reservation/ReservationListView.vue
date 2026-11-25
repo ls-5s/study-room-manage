@@ -12,7 +12,7 @@ import { reservationStatusOptions } from '../../utils/reservation'
 const router = useRouter()
 const filters = reactive({
   status: '' as ReservationStatus | '',
-  dates: [] as string[],
+  dates: [] as string[] | null,
   page: 1,
   pageSize: 6,
 })
@@ -29,8 +29,8 @@ async function load() {
   try {
     const result = await listMyReservations({
       status: filters.status,
-      dateFrom: filters.dates[0],
-      dateTo: filters.dates[1],
+      dateFrom: filters.dates?.[0],
+      dateTo: filters.dates?.[1],
       page: filters.page,
       pageSize: filters.pageSize,
     })

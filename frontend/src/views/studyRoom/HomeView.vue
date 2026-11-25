@@ -17,6 +17,7 @@ const filters = reactive({
   pageSize: 9,
 })
 const rooms = shallowRef<StudyRoomSummary[]>([])
+const appliedDate = shallowRef('')
 const total = shallowRef(0)
 const loading = shallowRef(false)
 const error = shallowRef('')
@@ -43,6 +44,7 @@ async function loadRooms() {
   try {
     const result = await getStudyRooms(query, controller.signal)
     rooms.value = result.items
+    appliedDate.value = query.date ?? ''
     total.value = result.total
   } catch (cause) {
     if (cause instanceof RequestError && cause.kind === 'cancel') return
@@ -199,7 +201,7 @@ onBeforeUnmount(() => {
 
     <div v-loading="loading" class="room-results">
       <div v-if="rooms.length" class="room-grid">
-        <RoomCard v-for="room in rooms" :key="room.id" :room="room" />
+        <RoomCard v-for="room in rooms" :key="room.id" :room="room" :date="appliedDate" />
       </div>
       <el-empty
         v-else-if="!loading"

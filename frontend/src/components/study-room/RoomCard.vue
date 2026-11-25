@@ -7,9 +7,14 @@ import { roomStatusLabels, roomStatusTagType } from '../../utils/study-room'
 
 const props = defineProps<{
   room: StudyRoomSummary
+  date?: string
 }>()
 
 const availability = computed(() => props.room.availableSeatCount ?? props.room.bookableSeatCount)
+const roomLink = computed(() => ({
+  path: `/study-rooms/${props.room.id}`,
+  query: { date: props.date || undefined, slotId: props.room.matchedSlot?.id },
+}))
 </script>
 
 <template>
@@ -61,7 +66,7 @@ const availability = computed(() => props.room.availableSeatCount ?? props.room.
         </div>
       </div>
 
-      <RouterLink class="room-card-action" :to="`/study-rooms/${room.id}`">
+      <RouterLink class="room-card-action" :to="roomLink">
         <span>查看座位</span>
         <el-icon><ArrowRight /></el-icon>
       </RouterLink>

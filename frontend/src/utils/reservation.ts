@@ -76,8 +76,8 @@ export function windowHint(window: CheckInWindow, state: WindowState): string {
   return `请在 ${deadline} 前完成签到`
 }
 
-export function canCancel(startAt: string, status: ReservationStatus): boolean {
-  return status === 'pending' && new Date(startAt).getTime() > Date.now()
+export function canCancel(startAt: string, status: ReservationStatus, now = new Date()): boolean {
+  return status === 'pending' && new Date(startAt).getTime() > now.getTime()
 }
 
 export function timelineActorLabel(actorType: 'user' | 'admin' | 'system'): string {

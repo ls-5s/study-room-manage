@@ -11,6 +11,7 @@ import { createViolationsMigration } from './009-create-violations.js';
 import { createFeedbackTicketsMigration } from './010-create-feedback-tickets.js';
 import { createStatisticsTablesMigration } from './011-create-statistics-tables.js';
 import { seedOperationalSettingsMigration } from './012-seed-operational-settings.js';
+import { sessionCreatedAtPrecisionMigration } from './013-session-created-at-precision.js';
 import type { Migration } from './types.js';
 import type { MigrationSqlExecutor } from './types.js';
 
@@ -27,6 +28,7 @@ export const migrations: readonly Migration[] = [
   createFeedbackTicketsMigration,
   createStatisticsTablesMigration,
   seedOperationalSettingsMigration,
+  sessionCreatedAtPrecisionMigration,
 ];
 
 export async function runMigrations(

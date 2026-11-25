@@ -107,7 +107,7 @@ export class AuthService {
           throw new HttpError(403, 'FORBIDDEN', '账号已停用，请联系管理员');
         }
 
-        await this.enforceSessionLimit(lockedUser.id, now, transaction);
+        const createdAt = await this.enforceSessionLimit(lockedUser.id, new Date(), transaction);
         await this.models.UserSession.create(
           {
             id: issued.sessionId,
@@ -115,7 +115,7 @@ export class AuthService {
             jti: issued.jti,
             expires_at: issued.expiresAt,
             revoked_at: null,
-            created_at: now,
+            created_at: createdAt,
           },
           { transaction },
         );
@@ -170,7 +170,7 @@ export class AuthService {
     userId: string,
     now: Date,
     transaction: Transaction,
-  ): Promise<void> {
+  ): Promise<Date> {
     const sessions = await this.models.UserSession.findAll({
       where: {
         user_id: userId,
@@ -192,5 +192,8 @@ export class AuthService {
         await session.save({ transaction });
       }
     }
+    // The user row lock serializes logins; UUIDs must never determine login order.
+    const latest = sessions.at(-1)?.created_at.getTime() ?? 0;
+    return new Date(Math.max(now.getTime(), latest + 1));
   }
 }

@@ -1,5 +1,6 @@
 import { Op, col, fn, literal, type WhereOptions } from 'sequelize';
 import { combineBusinessDateTime } from '../lib/reservation-time.js';
+import { addBusinessDays } from '../lib/study-room-time.js';
 import { toBusinessIso } from '../lib/reservation-time.js';
 import type { Logger } from '../lib/logger.js';
 import { currentRequestId } from '../lib/request-context.js';
@@ -246,6 +247,28 @@ export class FeedbackService {
     this.logger = options.logger;
   }
 
+  async listResources() {
+    const rooms = await this.models.StudyRoom.findAll({
+      attributes: ['id', 'name', 'location', 'status'],
+      order: [['id', 'ASC']],
+    });
+    return rooms.map((room) => ({
+      id: String(room.id), name: room.name, location: room.location, status: room.status,
+    }));
+  }
+
+  async listResourceSeats(rawRoomId: string) {
+    const roomId = normalizeOptionalId(rawRoomId, 'roomId');
+    if (!roomId) throw fieldError('roomId', '请选择自习室');
+    const room = await this.models.StudyRoom.findByPk(roomId, { attributes: ['id'] });
+    if (!room) throw new HttpError(404, 'NOT_FOUND', '自习室不存在');
+    const seats = await this.models.Seat.findAll({
+      where: { room_id: roomId }, attributes: ['id', 'seat_no', 'status'],
+      order: [['seat_no', 'ASC'], ['id', 'ASC']],
+    });
+    return seats.map((seat) => ({ id: String(seat.id), seatNo: seat.seat_no, status: seat.status }));
+  }
+
   async create(userId: string, rawInput: Record<string, unknown>) {
     const input = validateFeedbackCreateInput(rawInput);
     const room = input.roomId
@@ -328,7 +351,7 @@ export class FeedbackService {
     if (filter.dateFrom || filter.dateTo) {
       const createdAt: Record<symbol, Date> = {};
       if (filter.dateFrom) createdAt[Op.gte] = combineBusinessDateTime(filter.dateFrom, '00:00');
-      if (filter.dateTo) createdAt[Op.lte] = combineBusinessDateTime(filter.dateTo, '23:59:59');
+      if (filter.dateTo) createdAt[Op.lt] = combineBusinessDateTime(addBusinessDays(filter.dateTo, 1), '00:00');
       where.created_at = createdAt;
     }
 

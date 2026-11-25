@@ -24,7 +24,13 @@ const bookingWindowDays = shallowRef(7)
 const lastDate = computed(() => addDays(today, bookingWindowDays.value - 1))
 const now = shallowRef(new Date())
 let clock: ReturnType<typeof setInterval> | undefined
-const date = shallowRef(today)
+function routeDate() {
+  const value = route.query.date
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return today
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value ? today : value
+}
+const date = shallowRef(routeDate())
 const room = shallowRef<StudyRoomDetail | null>(null)
 const selectedSlot = shallowRef<TimeSlot | null>(null)
 const seatMap = shallowRef<SeatMapResult | null>(null)
@@ -93,9 +99,10 @@ async function loadRoom() {
     if (sequence !== roomSequence) return
     room.value = result
     now.value = new Date()
-    const firstAvailable = result.timeSlots.find(
-      (slot) => !isSlotStarted(date.value, slot.startTime, now.value),
+    const available = result.timeSlots.filter(
+      (slot) => slot.status === 'active' && !isSlotStarted(date.value, slot.startTime, now.value),
     )
+    const firstAvailable = available.find((slot) => slot.id === route.query.slotId) ?? available[0]
     if (firstAvailable) {
       selectedSlot.value = firstAvailable
       await loadSeats()
@@ -134,6 +141,12 @@ function goToReservation() {
 
 watch(date, () => {
   void loadRoom()
+})
+
+watch(() => [route.params.id, route.query.date, route.query.slotId], () => {
+  const next = routeDate()
+  if (date.value !== next) date.value = next
+  else void loadRoom()
 })
 
 onMounted(async () => {

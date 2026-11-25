@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Lock, User } from '@element-plus/icons-vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { reactive, shallowRef, useTemplateRef } from 'vue'
+import { computed, reactive, shallowRef, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import type { LoginInput } from '../../types/auth'
@@ -10,6 +10,9 @@ import { RequestError } from '../../utils/request'
 
 const auth = useAuthStore()
 const route = useRoute()
+const registerLink = computed(() => ({
+  path: '/register', query: { redirect: safeRedirectPath(route.query.redirect) ?? undefined },
+}))
 const router = useRouter()
 const formRef = useTemplateRef<FormInstance>('formRef')
 const pending = shallowRef(false)
@@ -126,7 +129,7 @@ async function submit() {
 
     <div class="auth-switch">
       <span>还没有学生账号？</span>
-      <RouterLink to="/register">创建账号</RouterLink>
+      <RouterLink :to="registerLink">创建账号</RouterLink>
     </div>
     <p class="auth-note">管理员账号由系统初始化脚本创建，不开放自助注册。</p>
   </section>

@@ -8,6 +8,7 @@ import {
   Warning,
 } from '@element-plus/icons-vue'
 import type { EChartsCoreOption } from 'echarts/core'
+import { ElMessage } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { getStatisticsOverview, getStatisticsTrend } from '../../api/statistics'
 import StatisticsChart from '../../components/statistics/StatisticsChart.vue'
@@ -28,7 +29,8 @@ import {
 } from '../../utils/statistics'
 
 const today = businessToday()
-const selectedDate = shallowRef(today)
+const selectedDate = shallowRef<string | null>(today)
+const appliedDate = shallowRef(today)
 const overview = shallowRef<StatisticsOverview | null>(null)
 const dayTrend = shallowRef<StatisticsTrend | null>(null)
 const roomTrend = shallowRef<StatisticsTrend | null>(null)
@@ -46,7 +48,7 @@ const coverageWarnings = computed(() => [
 let controller: AbortController | null = null
 let loadSequence = 0
 
-const trendDateFrom = computed(() => addDays(selectedDate.value, -6))
+const trendDateFrom = computed(() => addDays(appliedDate.value, -6))
 const metricCards = computed(() => [
   {
     label: '预约场次',
@@ -295,6 +297,11 @@ const hasSlotChartData = computed(
 )
 
 async function load() {
+  if (!selectedDate.value) {
+    ElMessage.warning('请选择统计日期')
+    return
+  }
+  const requestedDate = selectedDate.value
   controller?.abort()
   controller = new AbortController()
   const current = ++loadSequence
@@ -304,15 +311,16 @@ async function load() {
   dayTrend.value = null
   roomTrend.value = null
   slotTrend.value = null
-  const range = { dateFrom: trendDateFrom.value, dateTo: selectedDate.value }
+  const range = { dateFrom: addDays(requestedDate, -6), dateTo: requestedDate }
   try {
     const [overviewResult, dayResult, roomResult, slotResult] = await Promise.allSettled([
-      getStatisticsOverview(selectedDate.value, controller.signal),
+      getStatisticsOverview(requestedDate, controller.signal),
       getStatisticsTrend({ ...range, groupBy: 'day' }, controller.signal),
       getStatisticsTrend({ ...range, groupBy: 'room' }, controller.signal),
       getStatisticsTrend({ ...range, groupBy: 'slot' }, controller.signal),
     ])
     if (current !== loadSequence) return
+    appliedDate.value = requestedDate
     overview.value = overviewResult.status === 'fulfilled' ? overviewResult.value : null
     dayTrend.value = dayResult.status === 'fulfilled' ? dayResult.value : null
     roomTrend.value = roomResult.status === 'fulfilled' ? roomResult.value : null
@@ -434,7 +442,7 @@ onBeforeUnmount(() => {
       <span v-if="overview?.rates.outageCancelledCount">
         系统停机取消 {{ overview.rates.outageCancelledCount }} 场，已从正常预约指标中排除
       </span>
-      <span>统计区间 {{ trendDateFrom }} 至 {{ selectedDate }}</span>
+      <span>统计区间 {{ trendDateFrom }} 至 {{ appliedDate }}</span>
     </div>
 
     <div v-if="loading && !overview" class="chart-loading-grid">

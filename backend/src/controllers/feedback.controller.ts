@@ -106,10 +106,16 @@ function parseAdminFilter(request: Request): AdminFeedbackListFilter {
 export function createFeedbackController(
   feedback: FeedbackService,
 ): Record<
-  'create' | 'listMine' | 'getMine' | 'listAdmin' | 'getAdmin' | 'transition',
+  'create' | 'listMine' | 'getMine' | 'listAdmin' | 'getAdmin' | 'transition' | 'listResources' | 'listResourceSeats',
   RequestHandler
 > {
   return {
+    listResources: async (_request, response) => {
+      response.json(success(await feedback.listResources(), '查询成功'));
+    },
+    listResourceSeats: async (request, response) => {
+      response.json(success(await feedback.listResourceSeats(String(request.params.roomId)), '查询成功'));
+    },
     create: async (request, response) => {
       const result = await feedback.create(
         actorId(request),

@@ -9,9 +9,19 @@ import type {
   FeedbackPage,
   FeedbackStatus,
   FeedbackSummary,
+  FeedbackResource,
+  FeedbackResourceSeat,
   StudentFeedbackDetail,
 } from '../types/feedback'
 import { envelopeData, request } from '../utils/request'
+
+export async function getFeedbackResources(): Promise<FeedbackResource[]> {
+  return envelopeData(await request.get('/feedback-resources'))
+}
+
+export async function getFeedbackResourceSeats(roomId: string): Promise<FeedbackResourceSeat[]> {
+  return envelopeData(await request.get(`/feedback-resources/${encodeURIComponent(roomId)}/seats`))
+}
 
 function listParams(query: FeedbackListQuery): Record<string, string | number> {
   const params: Record<string, string | number> = {

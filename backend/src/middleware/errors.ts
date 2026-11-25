@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { UniqueConstraintError } from 'sequelize';
 import type { ErrorCode, ErrorDetails } from '../types/api.js';
 import { failure } from '../types/api.js';
 import type { Logger } from '../lib/logger.js';
@@ -44,6 +45,10 @@ export function errorHandler(logger: Logger): ErrorRequestHandler {
       for (const [name, value] of Object.entries(error.headers)) {
         response.setHeader(name, value);
       }
+    } else if (error instanceof UniqueConstraintError) {
+      statusCode = 409;
+      code = 'CONFLICT';
+      message = '资源信息重复，请检查名称、编号或位置';
     } else if (typeof error === 'object' && error !== null && 'type' in error) {
       if (error.type === 'entity.parse.failed') {
         statusCode = 400;

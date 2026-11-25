@@ -10,19 +10,18 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, shallowRef, watch } from 'vue'
-import { createFeedback, getMyFeedback, listMyFeedback } from '../../api/feedback'
-import { getSeatMap, getStudyRoom, getStudyRooms } from '../../api/study-room'
+import { createFeedback, getMyFeedback, listMyFeedback, getFeedbackResources, getFeedbackResourceSeats } from '../../api/feedback'
 import type {
   CreateFeedbackResult,
   FeedbackStatus,
   FeedbackSummary,
   FeedbackType,
   StudentFeedbackDetail,
+  FeedbackResource,
+  FeedbackResourceSeat,
 } from '../../types/feedback'
-import type { SeatMapSeat, StudyRoomDetail, StudyRoomSummary } from '../../types/study-room'
 import { RequestError } from '../../utils/request'
 import { formatDateTime } from '../../utils/reservation'
-import { businessToday } from '../../utils/study-room'
 import {
   feedbackLocationLabel,
   feedbackStatusLabels,
@@ -34,12 +33,10 @@ import {
 } from '../../utils/feedback'
 
 const activeTab = shallowRef<'submit' | 'mine'>('submit')
-const today = businessToday()
 
-const rooms = shallowRef<StudyRoomSummary[]>([])
+const rooms = shallowRef<FeedbackResource[]>([])
 const roomsLoading = shallowRef(false)
-const roomDetail = shallowRef<StudyRoomDetail | null>(null)
-const seats = shallowRef<SeatMapSeat[]>([])
+const seats = shallowRef<FeedbackResourceSeat[]>([])
 const seatsLoading = shallowRef(false)
 const seatLoadError = shallowRef('')
 const submitting = shallowRef(false)
@@ -83,11 +80,10 @@ const seatRequired = computed(() => form.type === 'occupied_seat')
 const selectedRoom = computed(() => rooms.value.find((room) => room.id === form.roomId) ?? null)
 const selectedSeat = computed(() => seats.value.find((seat) => seat.id === form.seatId) ?? null)
 
-const seatStatusLabels: Readonly<Record<SeatMapSeat['status'], string>> = {
+const seatStatusLabels: Readonly<Record<FeedbackResourceSeat['status'], string>> = {
   available: '空闲',
   maintenance: '维修',
   disabled: '停用',
-  reserved: '已预约',
 }
 
 function typeLabel(row: unknown): string {
@@ -113,8 +109,7 @@ function openDetailRow(row: unknown) {
 async function loadRooms() {
   roomsLoading.value = true
   try {
-    const result = await getStudyRooms({ page: 1, pageSize: 100 })
-    rooms.value = result.items
+    rooms.value = await getFeedbackResources()
   } catch (cause) {
     submitError.value = cause instanceof RequestError ? cause.message : '自习室列表加载失败'
   } finally {
@@ -126,9 +121,9 @@ watch(
   () => form.roomId,
   async (roomId, _previous, onCleanup) => {
     form.seatId = ''
-    roomDetail.value = null
     seats.value = []
     seatLoadError.value = ''
+    seatsLoading.value = false
     if (!roomId) return
 
     let current = true
@@ -137,16 +132,8 @@ watch(
     })
     seatsLoading.value = true
     try {
-      const room = await getStudyRoom(roomId, today)
-      if (!current) return
-      roomDetail.value = room
-      const slot = room.timeSlots.find((item) => item.status === 'active')
-      if (!slot) {
-        seatLoadError.value = '该自习室当前没有可用的开放时段，暂时无法选择座位。'
-        return
-      }
-      const seatMap = await getSeatMap(roomId, today, slot.id)
-      if (current) seats.value = seatMap.seats
+      const result = await getFeedbackResourceSeats(roomId)
+      if (current) seats.value = result
     } catch (cause) {
       if (current) {
         seatLoadError.value = cause instanceof RequestError ? cause.message : '座位列表加载失败'
@@ -437,7 +424,7 @@ onBeforeUnmount(() => {
                   </select>
                   <p v-if="formErrors.seatId" class="field-error">{{ formErrors.seatId }}</p>
                   <p v-if="seatLoadError" class="field-warning">{{ seatLoadError }}</p>
-                  <p v-else-if="roomDetail && seats.length" class="field-hint">
+                  <p v-else-if="form.roomId && seats.length" class="field-hint">
                     已载入 {{ seats.length }} 个座位，维修或停用座位也可用于问题反馈。
                   </p>
                 </div>

@@ -95,3 +95,15 @@ export interface CreateFeedbackResult {
 }
 
 export type FeedbackTargetStatus = 'processing' | 'resolved' | 'rejected'
+export interface FeedbackResource {
+  id: string
+  name: string
+  location: string
+  status: 'open' | 'closed' | 'disabled'
+}
+
+export interface FeedbackResourceSeat {
+  id: string
+  seatNo: string
+  status: 'available' | 'maintenance' | 'disabled'
+}

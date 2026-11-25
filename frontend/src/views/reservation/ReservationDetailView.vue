@@ -3,6 +3,7 @@ import { ArrowLeft, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onMounted, shallowRef } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useNow } from '../../composables/useNow'
 import { cancelReservation, getReservation } from '../../api/reservation'
 import CheckInPanel from '../../components/reservation/CheckInPanel.vue'
 import ReservationTimeline from '../../components/reservation/ReservationTimeline.vue'
@@ -19,16 +20,17 @@ import {
 } from '../../utils/reservation'
 
 const route = useRoute()
+const now = useNow()
 const detail = shallowRef<ReservationDetail | null>(null)
 const loading = shallowRef(false)
 const error = shallowRef('')
 
 const id = computed(() => String(route.params.id))
 const state = computed(() =>
-  detail.value ? windowState(detail.value.checkInWindow) : ('before' as const),
+  detail.value ? windowState(detail.value.checkInWindow, now.value) : ('before' as const),
 )
 const cancellable = computed(() =>
-  detail.value ? canCancel(detail.value.startAt, detail.value.status) : false,
+  detail.value ? canCancel(detail.value.startAt, detail.value.status, now.value) : false,
 )
 
 async function load() {

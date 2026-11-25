@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { computed, shallowRef } from 'vue'
+import { useNow } from '../../composables/useNow'
 import { submitCheckIn } from '../../api/check-in'
 import type { CheckInPayload, ReservationDetail } from '../../types/reservation'
 import { RequestError } from '../../utils/request'
@@ -19,7 +20,8 @@ const raw = shallowRef('')
 const pending = shallowRef(false)
 const error = shallowRef('')
 const scannerOpen = shallowRef(false)
-const state = computed(() => windowState(props.reservation.checkInWindow))
+const now = useNow()
+const state = computed(() => windowState(props.reservation.checkInWindow, now.value))
 const disabled = computed(
   () => pending.value || props.reservation.status !== 'pending' || state.value !== 'open',
 )

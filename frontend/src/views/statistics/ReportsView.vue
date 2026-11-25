@@ -28,12 +28,13 @@ import {
 
 const today = businessToday()
 const filters = reactive({
-  dates: [addDays(today, -6), today] as string[],
+  dates: [addDays(today, -6), today] as string[] | null,
   groupBy: 'day' as StatisticsGroupBy,
   roomId: '',
 })
 const rooms = shallowRef<StudyRoomSummary[]>([])
 const trend = shallowRef<StatisticsTrend | null>(null)
+const appliedQuery = shallowRef<StatisticsTrendQuery | null>(null)
 const loading = shallowRef(false)
 const exporting = shallowRef(false)
 const error = shallowRef('')
@@ -41,15 +42,15 @@ let controller: AbortController | null = null
 let loadSequence = 0
 
 const query = computed<StatisticsTrendQuery>(() => ({
-  dateFrom: filters.dates[0],
-  dateTo: filters.dates[1],
+  dateFrom: filters.dates?.[0],
+  dateTo: filters.dates?.[1],
   groupBy: filters.groupBy,
   roomId: filters.roomId || undefined,
 }))
 const rangeLabel = computed(() =>
-  filters.dates.length === 2
-    ? statisticsRangeLabel(filters.dates[0] ?? '', filters.dates[1] ?? '')
-    : '最近 7 天',
+  appliedQuery.value
+    ? statisticsRangeLabel(appliedQuery.value.dateFrom ?? '', appliedQuery.value.dateTo ?? '')
+    : '尚未生成报表',
 )
 const colors = useChartTheme()
 const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -190,23 +191,26 @@ async function loadRooms() {
 }
 
 async function load() {
-  if (filters.dates.length !== 2 || !filters.dates[0] || !filters.dates[1]) {
+  if (filters.dates?.length !== 2 || !filters.dates[0] || !filters.dates[1]) {
     ElMessage.warning('请选择完整的统计日期范围')
     return
   }
   controller?.abort()
   controller = new AbortController()
   const current = ++loadSequence
+  const requestedQuery = { ...query.value }
   loading.value = true
   error.value = ''
   try {
-    const result = await getStatisticsTrend(query.value, controller.signal)
+    const result = await getStatisticsTrend(requestedQuery, controller.signal)
     if (current !== loadSequence) return
     trend.value = result
+    appliedQuery.value = requestedQuery
   } catch (cause) {
     if (cause instanceof RequestError && cause.kind === 'cancel') return
     if (current !== loadSequence) return
     trend.value = null
+    appliedQuery.value = null
     error.value = cause instanceof RequestError ? cause.message : '统计报表加载失败'
   } finally {
     if (current === loadSequence) loading.value = false
@@ -232,10 +236,10 @@ function saveBlob(blob: Blob, filename: string) {
 }
 
 async function exportReport() {
-  if (exporting.value || !trend.value) return
+  if (exporting.value || loading.value || !trend.value || !appliedQuery.value) return
   exporting.value = true
   try {
-    const result = await getStatisticsExport(query.value)
+    const result = await getStatisticsExport({ ...appliedQuery.value })
     saveBlob(result.blob, result.filename)
     ElMessage.success('统计报表已导出')
   } catch (cause) {
@@ -331,7 +335,7 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <div class="report-context">
-        <span>当前按{{ statisticsGroupLabel(filters.groupBy) }}分组</span>
+        <span>当前按{{ statisticsGroupLabel(appliedQuery?.groupBy ?? 'day') }}分组</span>
         <span v-if="trend">更新于 {{ formatDateTime(trend.generatedAt) }}</span>
         <span>共 {{ trend?.items.length ?? 0 }} 个分组</span>
       </div>
@@ -375,14 +379,14 @@ onBeforeUnmount(() => {
         <header class="panel-heading">
           <div>
             <span>文字明细</span>
-            <h2>{{ statisticsGroupLabel(filters.groupBy) }}统计表</h2>
+            <h2>{{ statisticsGroupLabel(appliedQuery?.groupBy ?? 'day') }}统计表</h2>
           </div>
           <small>CSV 与此表使用同一接口结果</small>
         </header>
         <el-table v-loading="loading" :data="trend?.items ?? []" max-height="560">
           <el-table-column
             prop="label"
-            :label="statisticsGroupLabel(filters.groupBy)"
+            :label="statisticsGroupLabel(appliedQuery?.groupBy ?? 'day')"
             min-width="120"
           />
           <el-table-column prop="reservationCount" label="预约数" width="70" />

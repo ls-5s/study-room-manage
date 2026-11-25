@@ -330,23 +330,11 @@ export class ViolationService {
         transaction,
       });
       const rules = await this.getRules();
-      const next = computeRestriction({
-        activeCount,
-        threshold: rules.threshold,
-        restrictionDays: rules.restrictionDays,
-        occurredAt: now,
-        startedAt: user.restriction_started_at,
-        until: user.restriction_until,
-      });
-      // computeRestriction clears the interval when the user drops below the threshold and
-      // otherwise returns the untouched interval.
+      // Revocation cannot create or extend a penalty, including an expired interval.
       user.violation_count = activeCount;
       if (activeCount < rules.threshold) {
         user.restriction_started_at = null;
         user.restriction_until = null;
-      } else {
-        user.restriction_started_at = next.startedAt;
-        user.restriction_until = next.until;
       }
       await user.save({ transaction });
 

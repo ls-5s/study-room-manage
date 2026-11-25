@@ -89,7 +89,11 @@ export class UserService {
       }
       user.display_name = displayName;
     }
-    if (input.email !== undefined) user.email = normalizeEmail(input.email);
+    if (input.email !== undefined) {
+      const email = normalizeEmail(input.email);
+      assertValidEmail(email);
+      user.email = email;
+    }
     if (input.phone !== undefined) user.phone = normalizePhone(input.phone);
     if (input.avatarUrl !== undefined) user.avatar_url = normalizeAvatarUrl(input.avatarUrl);
 

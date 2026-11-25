@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Calendar, Location, Timer } from '@element-plus/icons-vue'
 import { computed } from 'vue'
+import { useNow } from '../../composables/useNow'
 import type { ReservationSummary } from '../../types/reservation'
 import {
   canCancel,
@@ -21,8 +22,9 @@ const emit = defineEmits<{
   checkin: [id: string]
 }>()
 
-const state = computed(() => windowState(props.reservation.checkInWindow))
-const showCancel = computed(() => canCancel(props.reservation.startAt, props.reservation.status))
+const now = useNow()
+const state = computed(() => windowState(props.reservation.checkInWindow, now.value))
+const showCancel = computed(() => canCancel(props.reservation.startAt, props.reservation.status, now.value))
 const showCheckIn = computed(() => props.reservation.status === 'pending' && state.value === 'open')
 </script>
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { reactive, shallowRef, useTemplateRef } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, reactive, shallowRef, useTemplateRef } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { safeRedirectPath } from '../../utils/auth-session'
 import { registerStudent } from '../../api/auth'
 import { RequestError } from '../../utils/request'
 
@@ -15,6 +16,10 @@ interface RegisterForm {
 }
 
 const router = useRouter()
+const route = useRoute()
+const loginLink = computed(() => ({
+  path: '/login', query: { redirect: safeRedirectPath(route.query.redirect) ?? undefined },
+}))
 const formRef = useTemplateRef<FormInstance>('formRef')
 const pending = shallowRef(false)
 const serverError = shallowRef('')
@@ -92,7 +97,7 @@ async function submit() {
     ElMessage.success('注册成功，请登录')
     await router.replace({
       name: 'login',
-      query: { registered: '1', username: form.username },
+      query: { ...loginLink.value.query, registered: '1', username: form.username },
     })
   } catch (error) {
     if (error instanceof RequestError) {
@@ -182,7 +187,7 @@ async function submit() {
 
     <p class="register-foot">
       已有账号？
-      <RouterLink to="/login">返回登录</RouterLink>
+      <RouterLink :to="loginLink">返回登录</RouterLink>
     </p>
   </section>
 </template>

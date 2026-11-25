@@ -21,6 +21,9 @@ export function createFeedbackRouter(dependencies: FeedbackRouterDependencies) {
   const studentGuard = [dependencies.authenticate, dependencies.requireStudent];
   const adminGuard = [dependencies.authenticate, dependencies.requireAdmin];
 
+  router.get('/feedback-resources', ...studentGuard, dependencies.controller.listResources);
+  router.get('/feedback-resources/:roomId/seats', ...studentGuard, dependencies.controller.listResourceSeats);
+
   router.post(
     '/feedback-tickets',
     ...studentGuard,

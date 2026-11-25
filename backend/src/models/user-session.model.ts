@@ -49,7 +49,7 @@ export function initUserSessionModel(sequelize: Sequelize) {
         allowNull: true,
       },
       created_at: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATE(3),
         allowNull: false,
       },
     },

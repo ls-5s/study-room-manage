@@ -33,7 +33,7 @@ const filters = reactive({
   studentNo: '',
   roomId: '',
   status: '' as ViolationStatus | '',
-  dates: [] as string[],
+  dates: [] as string[] | null,
   page: 1,
   pageSize: 10,
 })
@@ -112,8 +112,8 @@ async function load() {
       studentNo: filters.studentNo.trim(),
       roomId: filters.roomId,
       status: filters.status,
-      dateFrom: filters.dates[0],
-      dateTo: filters.dates[1],
+      dateFrom: filters.dates?.[0],
+      dateTo: filters.dates?.[1],
       page: filters.page,
       pageSize: filters.pageSize,
     })

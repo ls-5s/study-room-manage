@@ -252,7 +252,12 @@ export class ReservationStateJob {
     this.lastStartedAt = this.now();
     const started = performance.now();
     this.activeRun = this.run()
-      .then(() => {
+      .then((result) => {
+        if (result.failed > 0) {
+          this.consecutiveFailures += 1;
+          this.lastErrorName = 'ReservationStatePartialFailure';
+          return;
+        }
         this.consecutiveFailures = 0;
         this.lastErrorName = null;
       })
