@@ -1,7 +1,7 @@
 # Export PDF via WPS using a unique temp copy of the DOCX (avoids stale reuse).
 param(
-    [string]$Docx = "C:\Users\11385\Desktop\bj\thesis\final\论文终稿.docx",
-    [string]$Pdf  = "C:\Users\11385\Desktop\bj\thesis\final\论文终稿.pdf"
+    [string]$Docx = "C:\Users\11385\Desktop\bj\docs\论文终稿\论文终稿.docx",
+    [string]$Pdf  = "C:\Users\11385\Desktop\bj\docs\论文终稿\论文终稿.pdf"
 )
 
 Get-Process wps, wpspdf -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue

@@ -13,7 +13,7 @@ from docx.shared import Cm, Pt, RGBColor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DRAFT = os.path.join(ROOT, "thesis", "drafts")
-FINAL = os.path.join(ROOT, "thesis", "final")
+FINAL = os.path.join(ROOT, "docs", "论文终稿")
 
 ORDER = [
     "00-摘要.md", "01-绪论.md", "02-关键技术.md", "03-需求分析.md",
@@ -31,7 +31,7 @@ def merge():
     parts = []
     for name in ORDER:
         with open(os.path.join(DRAFT, name), encoding="utf-8-sig") as fp:
-            parts.append(fp.read().strip())
+            parts.append(fp.read().strip().replace("](../figures/", "](../../thesis/figures/"))
     text = "\n\n".join(parts)
     os.makedirs(FINAL, exist_ok=True)
     out = os.path.join(FINAL, "论文终稿.md")

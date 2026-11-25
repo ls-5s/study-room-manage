@@ -9,7 +9,7 @@ import pymupdf
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-PDF = r"thesis\final\论文终稿.pdf"
+PDF = r"docs\论文终稿\论文终稿.pdf"
 SPEC = {
     "hdr": ("STXingkai", 10.45),
     "pagenum": ("TimesNewRomanPSMT", 10.45),

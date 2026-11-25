@@ -7,7 +7,7 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MD = os.path.join(ROOT, "thesis", "final", "论文终稿.md")
+MD = os.path.join(ROOT, "docs", "论文终稿", "论文终稿.md")
 REF = os.path.join(ROOT, "output", "ref_pdf_text.txt")
 OUT = os.path.join(ROOT, "thesis", "reports", "自检报告.md")
 
