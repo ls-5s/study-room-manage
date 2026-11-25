@@ -117,7 +117,7 @@ pnpm dev
 │  ├─ 论文终稿/       论文 DOCX、Markdown 与 PDF
 │  ├─ modules/        M01–M08 模块文档
 │  └─ assets/         README 封面与 67 张界面截图
-├─ thesis/            论文源稿、figures 插图与 reports 校验记录
+├─ thesis/            论文源稿、插图、字体资源与核对记录
 ├─ scripts/           论文排版链：图渲染、DOCX 生成、PDF 导出、版式校验
 └─ package.json       根脚本（dev / build）
 ```
@@ -152,7 +152,7 @@ pnpm dev
 
 - [论文终稿.pdf](docs/论文终稿/论文终稿.pdf)（125 页）
 - [论文终稿.docx](docs/论文终稿/论文终稿.docx)
-- [版式比对记录](thesis/reports/版式比对.md) · [参考文献核对](thesis/reports/文献核对.md)
+- [论文自检报告](thesis/reports/自检报告.md) · [文献与版式核对](thesis/reports/文献核对.md)
 
 排版链条：`scripts/render_diagrams.py` → `scripts/build_thesis_docx.py` → `scripts/export_pdf_ascii.ps1`，校验脚本 `thesis_check.py`。
 
